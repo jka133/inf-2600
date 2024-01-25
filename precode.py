@@ -99,9 +99,12 @@ tower.visualize()"""
 # Implement the search algorithms here
 def dfs_search(tower):
     # Implement Depth-First Search
-    
+    states = []
+    bottom_color = tower.configuration[0]
+    while not tower.check_cube():
+        pass
     #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
-    pass
+    
 
 def bfs_search(tower):
     # Implement Breadth-First Search
