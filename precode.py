@@ -99,13 +99,8 @@ tower.visualize()"""
 # Implement the search algorithms here
 def dfs_search(tower):
     # Implement Depth-First Search
-
-    tower.rotate_cube(1, 2)
-    tower.rotate_cube(1, 2)
-    tower.rotate_cube(1, 2)
-
-    tower.rotate_cube(3)
-    tower.rotate_cube(3)
+    
+    #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     pass
 
 def bfs_search(tower):
@@ -124,6 +119,12 @@ if __name__ == '__main__':
     initial_configuration = ["red","blue","red","green"]
     tower = CubeTower(initial_configuration)
     tower.visualize()
-    dfs_search(tower)
+
+    tower.rotate_cube(1, 2)
+    tower.rotate_cube(1, 2)
+    tower.rotate_cube(1, 2)
+    tower.rotate_cube(3)
+    tower.rotate_cube(3)
+
     tower.visualize()
     print(tower.check_cube())
