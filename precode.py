@@ -105,18 +105,15 @@ tower.visualize()"""
 def dfs_search(tower):
     if tower.check_cube() == True:
         return 
-    order = tower.order
-    config = tower.configuration
-    # Implement Depth-First Search
     set = [] # Structure of unique instances
     set.append(tower.configuration)
-    for h in range(tower.height):
-        for c in range(1, len(tower.order)):
-            if c<h:
-                continue
-            tower.rotate_cube(h,c)
-            print(tower.configuration)
-            set.append(tower.configuration)
+
+    order = tower.order
+    config = tower.configuration
+
+
+
+    
     #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     
 
