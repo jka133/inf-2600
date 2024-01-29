@@ -87,7 +87,12 @@ class CubeTower:
 
     def next_color(self, index):
         color = self.configuration[index]
-        next_color_index = self.order.index(color) + 1 if (self.order.index(color) + 1) < len(self.order) else self.order.index(color) + 1-4
+        next_color_index = self.order.index(color) + 1 
+        if (self.order.index(color) + 1) < len(self.order): 
+            next_color_index = self.order.index(color) + 1 
+        else:
+            next_color_index = self.order.index(color) - 3
+
         return self.order[next_color_index]
 
 # Example Usage
@@ -98,11 +103,20 @@ tower.visualize()"""
 
 # Implement the search algorithms here
 def dfs_search(tower):
+    if tower.check_cube() == True:
+        return 
+    order = tower.order
+    config = tower.configuration
     # Implement Depth-First Search
-    states = []
-    bottom_color = tower.configuration[0]
-    while not tower.check_cube():
-        pass
+    set = [] # Structure of unique instances
+    set.append(tower.configuration)
+    for h in range(tower.height):
+        for c in range(1, len(tower.order)):
+            if c<h:
+                continue
+            tower.rotate_cube(h,c)
+            print(tower.configuration)
+            set.append(tower.configuration)
     #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     
 
@@ -120,7 +134,7 @@ def a_star_search(tower):
 
 if __name__ == '__main__':
     initial_configuration = ["red","blue","red","green"]
-    tower = CubeTower(initial_configuration)
+    """tower = CubeTower(initial_configuration)
     tower.visualize()
 
     tower.rotate_cube(1, 2)
@@ -130,4 +144,8 @@ if __name__ == '__main__':
     tower.rotate_cube(3)
 
     tower.visualize()
-    print(tower.check_cube())
+    print(tower.check_cube())"""
+
+    tower2 = CubeTower(initial_configuration)
+    dfs_search(tower2)
+    
