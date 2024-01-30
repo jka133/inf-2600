@@ -104,24 +104,23 @@ class CubeTower:
 tower = CubeTower(initial_configuration)
 tower.visualize()"""
 
-
+def child_nodes(tower):
+    lst = []
+    for i in range(tower.height):
+        for j in range(tower.height):
+            if j < i:
+                continue
+            lst.append(tower.rotate_cube(i, j))
+    
+    return lst
 # Implement the search algorithms here
 def dfs_search(tower):
 
-    path = []
-
-    for i in range(len(tower.configuration)-1):
-        while tower.configuration[i] != tower.configuration[i+1]:
-            #tower.visualize()
-            path.append(tower.configuration)
-            tower = tower.rotate_cube(i+1)
-
-    if tower.check_cube() == True:
-        print(len(path))
+    stack = []
+    for node in child_nodes(tower):
+        print(node.configuration)
+        
     
-    return tower
-    
-    #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     
 
 def bfs_search(tower):
@@ -140,18 +139,22 @@ if __name__ == '__main__':
     initial_configuration = ["yellow","red","blue","green"]
     tower = CubeTower(initial_configuration)
     #tower.visualize()
-    tower = dfs_search(tower)
+    #tower = dfs_search(tower)
+
 
     """tower = tower.rotate_cube(1, 2)
     tower = tower.rotate_cube(1, 2)
     tower = tower.rotate_cube(1, 2)
-    tower = tower.rotate_cube(3)
+    tower = tower.rotate_cube(3,0)
     tower = tower.rotate_cube(3)"""
 
     #tower.visualize()
-    tower.check_cube()
-    tower.get_path()
-    tower.visualize_path()
+    """tower.check_cube()
+    tower.get_path()"""
+    dfs_search(tower)
+    for ct in child_nodes(tower):
+        continue
+        ct.visualize_path()
 
 
     """tower2 = CubeTower(initial_configuration)
