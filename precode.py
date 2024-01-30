@@ -61,6 +61,7 @@ class CubeTower:
         while current.parent is not None:
             path.append(current.configuration)
             current = current.parent
+        path.append(current.configuration)
         path.reverse()
         return path
     
@@ -77,16 +78,19 @@ class CubeTower:
         :param hold_index: The index of the cube to hold, if any.
         """
         # Implement the rotation logic
+        new_configuration = [x for x in self.configuration]
         if hold_index != None:
             for i in range(index, hold_index, 1):
-                self.configuration[i] = self.next_color(i)
+                new_configuration[i] = self.next_color(i, new_configuration)
         else: 
             for i in range(index, self.height, 1):
-                self.configuration[i] = self.next_color(i)
+                new_configuration[i] = self.next_color(i, new_configuration)
+
+        return CubeTower(new_configuration, self)
         
 
-    def next_color(self, index):
-        color = self.configuration[index]
+    def next_color(self, index, new_configuration):
+        color = new_configuration[index]
         next_color_index = self.order.index(color) + 1 
         if (self.order.index(color) + 1) < len(self.order): 
             next_color_index = self.order.index(color) + 1 
@@ -103,14 +107,20 @@ tower.visualize()"""
 
 # Implement the search algorithms here
 def dfs_search(tower):
+
+    path = []
+
+    for i in range(len(tower.configuration)-1):
+        while tower.configuration[i] != tower.configuration[i+1]:
+            #tower.visualize()
+            path.append(tower.configuration)
+            tower = tower.rotate_cube(i+1)
+
     if tower.check_cube() == True:
-        return 
-    set = [] # Structure of unique instances
-    set.append(tower.configuration)
-
-    order = tower.order
-    config = tower.configuration
-
+        print(len(path))
+    
+    return tower
+    
     #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     
 
@@ -127,18 +137,22 @@ def a_star_search(tower):
 
 
 if __name__ == '__main__':
-    initial_configuration = ["red","blue","red","green"]
+    initial_configuration = ["yellow","red","blue","green"]
     tower = CubeTower(initial_configuration)
-    tower.visualize()
+    #tower.visualize()
+    tower = dfs_search(tower)
 
-    tower.rotate_cube(1, 2)
-    tower.rotate_cube(1, 2)
-    tower.rotate_cube(1, 2)
-    tower.rotate_cube(3)
-    tower.rotate_cube(3)
+    """tower = tower.rotate_cube(1, 2)
+    tower = tower.rotate_cube(1, 2)
+    tower = tower.rotate_cube(1, 2)
+    tower = tower.rotate_cube(3)
+    tower = tower.rotate_cube(3)"""
 
-    tower.visualize()
-    print(tower.check_cube())
+    #tower.visualize()
+    tower.check_cube()
+    tower.get_path()
+    tower.visualize_path()
+
 
     """tower2 = CubeTower(initial_configuration)
     dfs_search(tower2)
