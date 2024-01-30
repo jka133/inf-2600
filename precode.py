@@ -111,9 +111,6 @@ def dfs_search(tower):
     order = tower.order
     config = tower.configuration
 
-
-
-    
     #need to store the states of the puzzle for this to work - as one is expected to go back in depth 
     
 
@@ -131,7 +128,7 @@ def a_star_search(tower):
 
 if __name__ == '__main__':
     initial_configuration = ["red","blue","red","green"]
-    """tower = CubeTower(initial_configuration)
+    tower = CubeTower(initial_configuration)
     tower.visualize()
 
     tower.rotate_cube(1, 2)
@@ -141,8 +138,8 @@ if __name__ == '__main__':
     tower.rotate_cube(3)
 
     tower.visualize()
-    print(tower.check_cube())"""
+    print(tower.check_cube())
 
-    tower2 = CubeTower(initial_configuration)
+    """tower2 = CubeTower(initial_configuration)
     dfs_search(tower2)
-    
+    """
