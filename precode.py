@@ -164,6 +164,9 @@ def a_star_search(tower):
 # Additional advanced search algorithm
 # ...
 
+def self_defined_search(tower):
+    pass
+
 
 if __name__ == '__main__':
     initial_configuration = ["yellow","red","blue","green"]
