@@ -79,6 +79,10 @@ class CubeTower:
         """
         # Implement the rotation logic
         new_configuration = [x for x in self.configuration]
+        if hold_index == 0:
+            hold_index = None
+        
+        
         if hold_index != None:
             for i in range(index, hold_index, 1):
                 new_configuration[i] = self.next_color(i, new_configuration)
@@ -99,33 +103,59 @@ class CubeTower:
 
         return self.order[next_color_index]
 
-# Example Usage
-"""initial_configuration = ["red","blue","red","green"]
-tower = CubeTower(initial_configuration)
-tower.visualize()"""
-
 def child_nodes(tower):
     lst = []
-    for i in range(tower.height):
-        for j in range(tower.height):
-            if j < i:
+    for i in range(0, tower.height, 1):
+        for j in range(0, tower.height, 1):
+            if j <= i:
                 continue
             lst.append(tower.rotate_cube(i, j))
-    
     return lst
+
+def unvisited(lst_to_check, lst_visited):
+    unvisited_lst = []
+    for elem in lst_to_check:
+        if (elem.configuration in lst_visited):
+            continue
+        unvisited_lst.append(elem)
+    return unvisited_lst
+
 # Implement the search algorithms here
-def dfs_search(tower):
+def dfs_search(tower, stack = [], explored = [], depth = 0):
 
-    stack = []
-    for node in child_nodes(tower):
-        print(node.configuration)
-        
-    
-    
+    explored.append(tower.configuration)
 
-def bfs_search(tower):
+    children = child_nodes(tower)
+    unvisited_child_nodes = unvisited(children, explored)
+
+    stack = unvisited_child_nodes + stack
+    current = stack.pop(0)
+
+    if current.check_cube() == True:
+        current.visualize_path()
+        print(f"DFS Success at depth {depth}")
+        return current
+    
+    dfs_search(current, stack, explored, depth +1)
+
+
+def bfs_search(tower, stack = [], explored = [], depth = 0):
     # Implement Breadth-First Search
-    pass
+
+    explored.append(tower.configuration)
+
+    children = child_nodes(tower)
+    unvisited_child_nodes = unvisited(children, explored)
+
+    stack = stack + unvisited_child_nodes
+
+    current = stack.pop(0)
+    if current.check_cube() == True:
+        current.visualize_path()
+        print(f"BFS Success at depth {depth}")
+        return current
+    
+    bfs_search(current, stack, explored, depth + 1)
 
 def a_star_search(tower):
     # Implement A* Search
@@ -138,25 +168,14 @@ def a_star_search(tower):
 if __name__ == '__main__':
     initial_configuration = ["yellow","red","blue","green"]
     tower = CubeTower(initial_configuration)
-    #tower.visualize()
-    #tower = dfs_search(tower)
 
-
-    """tower = tower.rotate_cube(1, 2)
-    tower = tower.rotate_cube(1, 2)
-    tower = tower.rotate_cube(1, 2)
-    tower = tower.rotate_cube(3,0)
-    tower = tower.rotate_cube(3)"""
-
-    #tower.visualize()
-    """tower.check_cube()
-    tower.get_path()"""
+    tower.visualize()
+    
     dfs_search(tower)
-    for ct in child_nodes(tower):
-        continue
-        ct.visualize_path()
 
+    initial_configuration = ["yellow","red","blue","green"]
+    tower = CubeTower(initial_configuration)
 
-    """tower2 = CubeTower(initial_configuration)
-    dfs_search(tower2)
-    """
+    bfs_search(tower)
+
+    exit()
