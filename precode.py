@@ -133,11 +133,10 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
 
     if current.check_cube() == True:
         current.visualize_path()
-        print(f"DFS Success at depth {depth}")
+        print(f"DFS success after {depth} operations")
         return current
     
     dfs_search(current, stack, explored, depth +1)
-
 
 def bfs_search(tower, stack = [], explored = [], depth = 0):
     # Implement Breadth-First Search
@@ -152,14 +151,59 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
     current = stack.pop(0)
     if current.check_cube() == True:
         current.visualize_path()
-        print(f"BFS Success at depth {depth}")
+        print(f"BFS success after {depth} operations")
         return current
     
     bfs_search(current, stack, explored, depth + 1)
 
-def a_star_search(tower):
+def colour_heuristic(config):
+    indx, hold_index = 0, 0
+    cols = []
+    counts = []
+    for x in config:
+        if x not in cols:
+            cols.append(x)
+            counts.append(config.count(x))
+
+    best_colour = cols[cols.index(max(cols))]
+    config = [1 if col == best_colour else 0 for col in config]
+
+    if config[0] == True:
+        for i in range(len(config)):
+            if config[i] != True:
+                indx = i
+                break
+
+        for j in range(indx, len(config)):
+            if config[j] == True:
+                hold_index = j
+                break
+            if j == len(config) - 1:
+                hold_index = 0
+
+    else:
+        indx = 0
+        for j in range(len(config)):
+            if config[j] == True:
+                hold_index = j
+                break
+            if j == len(config) - 1:
+                hold_index = 0
+
+    return indx, hold_index
+
+def a_star_search(tower, depth = 0):
     # Implement A* Search
-    pass
+
+    indx, hold_index = colour_heuristic(tower.configuration)
+    tower = tower.rotate_cube(indx, hold_index)
+
+    if tower.check_cube() == True:
+        print(f'A* success after {depth} operations')
+        tower.visualize_path()
+        return tower
+    
+    a_star_search(tower, depth+1)
 
 # Additional advanced search algorithm
 # ...
@@ -169,16 +213,11 @@ def self_defined_search(tower):
 
 
 if __name__ == '__main__':
-    initial_configuration = ["yellow","red","blue","green"]
+    initial_configuration = ["red","yellow","green","yellow","blue"]
     tower = CubeTower(initial_configuration)
 
     tower.visualize()
-    
+    a_star_search(tower)
     dfs_search(tower)
-
-    initial_configuration = ["yellow","red","blue","green"]
-    tower = CubeTower(initial_configuration)
-
     bfs_search(tower)
 
-    exit()
