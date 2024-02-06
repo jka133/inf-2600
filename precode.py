@@ -233,6 +233,7 @@ def best_indexes(config):
     return indx, hold_index
 
 def self_defined_search(tower, depth = 0):
+    """ Greedy first search?"""
     while tower.check_cube() != True:
         depth += 1
         indx, hold_index = best_indexes(tower.configuration)
