@@ -91,8 +91,7 @@ class CubeTower:
             for i in range(index, self.height, 1):
                 new_configuration[i] = self.next_color(i, new_configuration)
 
-        return CubeTower(new_configuration, self)
-        
+        return CubeTower(new_configuration, self)    
 
     def next_color(self, index, new_configuration):
         color = new_configuration[index]
@@ -133,7 +132,7 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
 
         if current.check_cube() == True:
             print(f"DFS success after {depth} operations")
-            current.visualize_path()
+            #current.visualize_path()
             return current
         
         children = child_nodes(current)
@@ -156,7 +155,7 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
 
         if current.check_cube() == True:
             print(f"BFS success after {depth} operations")
-            current.visualize_path()
+            #current.visualize_path()
             return current
         
         children = child_nodes(current)
@@ -192,7 +191,7 @@ def a_star_search(tower, depth = 0):
         tower = current
         
     print(f"A* success after {depth} operations")
-    current.visualize_path()
+    #current.visualize_path()
     return current
 
 # Additional advanced search algorithm
@@ -240,25 +239,24 @@ def self_defined_search(tower, depth = 0):
         tower = tower.rotate_cube(indx, hold_index)
 
     print(f'Self defined success after {depth} operations')
-    tower.visualize_path()
+    #tower.visualize_path()
     return tower
 
+def search_result(search_method, tower):
+    print("\n" + "=" * 40 + "\n")  
+
+    start = time.time()
+    sollution = search_method(tower)
+    end = time.time()
+    print(f"{search_method.__name__} search time: {time.time() - end:.6f} seconds")
+    sollution.visualize_path()
 
 if __name__ == '__main__':
-    initial_configuration = ["red","yellow","green","red","blue","green"]
+    initial_configuration = ["red","yellow","green","red"]
     tower = CubeTower(initial_configuration)
     tower.visualize()
-
-    start = time.time()
-    a_star_search(tower)
-    print(f"A* search time: {time.time()-start}")
-    start = time.time()
-    self_defined_search(tower)
-    print(f"Self defined search time: {time.time()-start}")
-    start = time.time()
-    dfs_search(tower)
-    print(f"DF search time: {time.time()-start}")
-    start = time.time()
-    bfs_search(tower)
-    print(f"BF search time: {time.time()-start}")
-
+    
+    search_result(a_star_search, tower)
+    search_result(self_defined_search, tower)
+    search_result(dfs_search, tower)
+    search_result(bfs_search, tower)
