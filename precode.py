@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 class CubeTower:
     def __init__(self, configuration, parent=None):
@@ -95,6 +96,7 @@ class CubeTower:
 
     def next_color(self, index, new_configuration):
         color = new_configuration[index]
+        #print(self.order.index(color) + 1 )
         next_color_index = self.order.index(color) + 1 
         if (self.order.index(color) + 1) < len(self.order): 
             next_color_index = self.order.index(color) + 1 
@@ -123,40 +125,78 @@ def unvisited(lst_to_check, lst_visited):
 # Implement the search algorithms here
 def dfs_search(tower, stack = [], explored = [], depth = 0):
 
-    explored.append(tower.configuration)
+    stack.append(tower)
 
-    children = child_nodes(tower)
-    unvisited_child_nodes = unvisited(children, explored)
+    while stack:
 
-    stack = unvisited_child_nodes + stack
-    current = stack.pop(0)
+        current = stack.pop(0)
 
-    if current.check_cube() == True:
-        current.visualize_path()
-        print(f"DFS success after {depth} operations")
-        return current
-    
-    dfs_search(current, stack, explored, depth +1)
+        if current.check_cube() == True:
+            print(f"DFS success after {depth} operations")
+            current.visualize_path()
+            return current
+        
+        children = child_nodes(current)
+        unvisited_child_nodes = unvisited(children, explored)
+
+        stack = unvisited_child_nodes + stack
+        
+        depth += 1
+        explored.append(current.configuration)
 
 def bfs_search(tower, stack = [], explored = [], depth = 0):
     # Implement Breadth-First Search
 
-    explored.append(tower.configuration)
+    stack.append(tower)
 
-    children = child_nodes(tower)
-    unvisited_child_nodes = unvisited(children, explored)
+    while stack:
 
-    stack = stack + unvisited_child_nodes
 
-    current = stack.pop(0)
-    if current.check_cube() == True:
-        current.visualize_path()
-        print(f"BFS success after {depth} operations")
-        return current
-    
-    bfs_search(current, stack, explored, depth + 1)
+        current = stack.pop(0)
 
-def colour_heuristic(config):
+        if current.check_cube() == True:
+            print(f"BFS success after {depth} operations")
+            current.visualize_path()
+            return current
+        
+        children = child_nodes(current)
+        unvisited_child_nodes = unvisited(children, explored)
+
+        stack = stack + unvisited_child_nodes
+        
+        depth += 1
+        explored.append(current.configuration)
+
+def heuristic(tower):
+
+    cols = []
+    counts = []
+    for x in tower.configuration:
+        if x not in cols:
+            cols.append(x)
+            counts.append(tower.configuration.count(x))
+
+    return - max(counts)
+
+def a_star_search(tower, depth = 0):
+    # Implement A* Search
+
+    while tower.check_cube() != True:
+        depth += 1
+        children = child_nodes(tower)
+        current = children[0]
+        for child in children[1:]:
+            if heuristic(child) < heuristic(current):
+                current = child
+        tower = current
+        
+    print(f"A* success after {depth} operations")
+    current.visualize_path()
+    return current
+
+# Additional advanced search algorithm
+# ...
+def best_indexes(config):
     indx, hold_index = 0, 0
     cols = []
     counts = []
@@ -165,7 +205,7 @@ def colour_heuristic(config):
             cols.append(x)
             counts.append(config.count(x))
 
-    best_colour = cols[cols.index(max(cols))]
+    best_colour = cols[counts.index(max(counts))]
     config = [1 if col == best_colour else 0 for col in config]
 
     if config[0] == True:
@@ -192,32 +232,32 @@ def colour_heuristic(config):
 
     return indx, hold_index
 
-def a_star_search(tower, depth = 0):
-    # Implement A* Search
+def self_defined_search(tower, depth = 0):
+    while tower.check_cube() != True:
+        depth += 1
+        indx, hold_index = best_indexes(tower.configuration)
+        tower = tower.rotate_cube(indx, hold_index)
 
-    indx, hold_index = colour_heuristic(tower.configuration)
-    tower = tower.rotate_cube(indx, hold_index)
-
-    if tower.check_cube() == True:
-        print(f'A* success after {depth} operations')
-        tower.visualize_path()
-        return tower
-    
-    a_star_search(tower, depth+1)
-
-# Additional advanced search algorithm
-# ...
-
-def self_defined_search(tower):
-    pass
+    print(f'Self defined success after {depth} operations')
+    tower.visualize_path()
+    return tower
 
 
 if __name__ == '__main__':
-    initial_configuration = ["red","yellow","green","yellow","blue"]
+    initial_configuration = ["red","yellow","green","red","blue","green"]
     tower = CubeTower(initial_configuration)
-
     tower.visualize()
+
+    start = time.time()
     a_star_search(tower)
+    print(f"A* search time: {time.time()-start}")
+    start = time.time()
+    self_defined_search(tower)
+    print(f"Self defined search time: {time.time()-start}")
+    start = time.time()
     dfs_search(tower)
+    print(f"DF search time: {time.time()-start}")
+    start = time.time()
     bfs_search(tower)
+    print(f"BF search time: {time.time()-start}")
 
