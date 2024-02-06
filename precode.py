@@ -180,6 +180,7 @@ def heuristic(tower):
 
 def a_star_search(tower, depth = 0):
     # Implement A* Search
+    """ There is not step measure since there is only allowed one operation, only heuristic is calculadet"""
 
     while tower.check_cube() != True:
         depth += 1
