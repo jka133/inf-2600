@@ -114,16 +114,10 @@ def child_nodes(tower):
     return lst
 
 def unvisited(lst_to_check, lst_visited):
-    unvisited_lst = []
-    for elem in lst_to_check:
-        if (elem.configuration in lst_visited):
-            continue
-        unvisited_lst.append(elem)
-    return unvisited_lst
+    return [x for x in lst_to_check if x.configuration not in lst_visited]
 
 # Implement the search algorithms here
 def dfs_search(tower, stack = [], explored = [], depth = 0):
-
     stack.append(tower)
 
     while stack:
@@ -134,17 +128,16 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
             #current.visualize_path()
             return current
         
+        explored.append(current.configuration)
+        
         children = child_nodes(current)
         unvisited_child_nodes = unvisited(children, explored)
 
         stack = unvisited_child_nodes + stack
         
         depth += 1
-        explored.append(current.configuration)
 
 def bfs_search(tower, stack = [], explored = [], depth = 0):
-    # Implement Breadth-First Search
-
     stack.append(tower)
 
     while stack:
@@ -155,13 +148,14 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
             #current.visualize_path()
             return current
         
+        explored.append(current.configuration)
+        
         children = child_nodes(current)
         unvisited_child_nodes = unvisited(children, explored)
-
+        
         stack = stack + unvisited_child_nodes
         
         depth += 1
-        explored.append(current.configuration)
 
 def heuristic(tower):
 
@@ -199,57 +193,18 @@ def a_star_search(tower, stack = [], depth = 0):
 
 # Additional advanced search algorithm
 # ...
-"""def best_indexes(config):
-    indx, hold_index = 0, 0
-    cols = []
-    counts = []
-    for x in config:
-        if x not in cols:
-            cols.append(x)
-            counts.append(config.count(x))
-
-    best_colour = cols[counts.index(max(counts))]
-    config = [1 if col == best_colour else 0 for col in config]
-
-    if config[0] == True:
-        for i in range(len(config)):
-            if config[i] != True:
-                indx = i
-                break
-
-        for j in range(indx, len(config)):
-            if config[j] == True:
-                hold_index = j
-                break
-            if j == len(config) - 1:
-                hold_index = 0
-
-    else:
-        indx = 0
-        for j in range(len(config)):
-            if config[j] == True:
-                hold_index = j
-                break
-            if j == len(config) - 1:
-                hold_index = 0
-
-    return indx, hold_index
-"""
 
 def gfs_search(tower, depth = 0):
     """ Greedy first search?"""
     while tower.check_cube() != True:
         depth += 1
         children = child_nodes(tower)
-        current = children[0]
-        for child in children[1:]:
-            if heuristic(child) < heuristic(current):
-                current = child
-        tower = current
+        children.sort(key=heuristic)
+        tower = children[0]
         
-    print(f'Self defined success after {depth} operations')
+    print(f'GFS success after {depth} operations')
     #current.visualize_path()
-    return current
+    return tower
 
 def search_result(search_method, tower):
     print("\n" + "=" * 40 + "\n")  
@@ -257,15 +212,15 @@ def search_result(search_method, tower):
     start = time.time()
     sollution = search_method(tower)
     end = time.time()
-    print(f"{search_method.__name__} search time: {time.time() - end:.6f} seconds")
+    print(f"{search_method.__name__} search time: {end - start:.6f} seconds")
     sollution.visualize_path()
 
 if __name__ == '__main__':
-    initial_configuration = ["red","yellow","green","red","blue","green"]
+    initial_configuration = ["green","red","blue","blue","red","yellow"]
     tower = CubeTower(initial_configuration)
     tower.visualize()
     
     search_result(a_star_search, tower)
     search_result(gfs_search, tower)
-    #search_result(dfs_search, tower)
-    #search_result(bfs_search, tower)
+    search_result(dfs_search, tower)
+    search_result(bfs_search, tower)
