@@ -127,7 +127,6 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
     stack.append(tower)
 
     while stack:
-
         current = stack.pop(0)
 
         if current.check_cube() == True:
@@ -149,8 +148,6 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
     stack.append(tower)
 
     while stack:
-
-
         current = stack.pop(0)
 
         if current.check_cube() == True:
@@ -177,18 +174,24 @@ def heuristic(tower):
 
     return - max(counts)
 
-def a_star_search(tower, depth = 0):
-    # Implement A* Search
-    """ There is not step measure since there is only allowed one operation, only heuristic is calculadet"""
+def steps(tower):
+    return len(tower.get_path())
 
-    while tower.check_cube() != True:
+def evaluation(tower):
+    return steps(tower) + heuristic(tower)
+
+def a_star_search(tower, stack = [], depth = 0):
+    # Implement A* Search
+    stack.append(tower)
+
+    while stack:
+        current = stack.pop(0)
+        if current.check_cube() == True:
+            break
+
         depth += 1
-        children = child_nodes(tower)
-        current = children[0]
-        for child in children[1:]:
-            if heuristic(child) < heuristic(current):
-                current = child
-        tower = current
+        stack += child_nodes(current)
+        stack.sort(key=evaluation) # Sorts list based on evaluation(tower) in ascending order
         
     print(f"A* success after {depth} operations")
     #current.visualize_path()
@@ -196,7 +199,7 @@ def a_star_search(tower, depth = 0):
 
 # Additional advanced search algorithm
 # ...
-def best_indexes(config):
+"""def best_indexes(config):
     indx, hold_index = 0, 0
     cols = []
     counts = []
@@ -231,17 +234,22 @@ def best_indexes(config):
                 hold_index = 0
 
     return indx, hold_index
+"""
 
-def self_defined_search(tower, depth = 0):
+def gfs_search(tower, depth = 0):
     """ Greedy first search?"""
     while tower.check_cube() != True:
         depth += 1
-        indx, hold_index = best_indexes(tower.configuration)
-        tower = tower.rotate_cube(indx, hold_index)
-
+        children = child_nodes(tower)
+        current = children[0]
+        for child in children[1:]:
+            if heuristic(child) < heuristic(current):
+                current = child
+        tower = current
+        
     print(f'Self defined success after {depth} operations')
-    #tower.visualize_path()
-    return tower
+    #current.visualize_path()
+    return current
 
 def search_result(search_method, tower):
     print("\n" + "=" * 40 + "\n")  
@@ -253,11 +261,11 @@ def search_result(search_method, tower):
     sollution.visualize_path()
 
 if __name__ == '__main__':
-    initial_configuration = ["red","yellow","green","red"]
+    initial_configuration = ["red","yellow","green","red","blue","green"]
     tower = CubeTower(initial_configuration)
     tower.visualize()
     
     search_result(a_star_search, tower)
-    search_result(self_defined_search, tower)
-    search_result(dfs_search, tower)
-    search_result(bfs_search, tower)
+    search_result(gfs_search, tower)
+    #search_result(dfs_search, tower)
+    #search_result(bfs_search, tower)
