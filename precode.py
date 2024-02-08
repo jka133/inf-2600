@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from memory_profiler import profile
 import time
 
 class CubeTower:
@@ -117,6 +118,7 @@ def unvisited(lst_to_check, lst_visited):
     return [x for x in lst_to_check if x.configuration not in lst_visited]
 
 # Implement the search algorithms here
+@profile
 def dfs_search(tower, stack = [], explored = [], depth = 0):
     stack.append(tower)
 
@@ -136,7 +138,7 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
         stack = unvisited_child_nodes + stack
         
         depth += 1
-
+@profile
 def bfs_search(tower, stack = [], explored = [], depth = 0):
     stack.append(tower)
 
@@ -173,7 +175,7 @@ def steps(tower):
 
 def evaluation(tower):
     return steps(tower) + heuristic(tower)
-
+@profile
 def a_star_search(tower, stack = [], depth = 0):
     # Implement A* Search
     stack.append(tower)
@@ -193,7 +195,7 @@ def a_star_search(tower, stack = [], depth = 0):
 
 # Additional advanced search algorithm
 # ...
-
+@profile
 def gfs_search(tower, depth = 0):
     """ Greedy first search?"""
     while tower.check_cube() != True:
