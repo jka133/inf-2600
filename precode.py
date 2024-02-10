@@ -95,6 +95,9 @@ class CubeTower:
         return CubeTower(new_configuration, self)    
 
     def next_color(self, index, new_configuration):
+        """
+        Returns the next colour for the cube in the towers order
+        """
         color = new_configuration[index]
         #print(self.order.index(color) + 1 )
         next_color_index = self.order.index(color) + 1 
@@ -106,20 +109,27 @@ class CubeTower:
         return self.order[next_color_index]
 
 def child_nodes(tower):
+    """
+    Returns a list of the possible tower to be made in one move from the tower given
+    """
     lst = []
     for i in range(0, tower.height, 1):
-        for j in range(0, tower.height, 1):
-            if j <= i:
-                continue
+        for j in range(i+1, tower.height, 1):
             lst.append(tower.rotate_cube(i, j))
     return lst
 
 def unvisited(lst_to_check, lst_visited):
+    """
+    Returns a list of unvisited configurations, given the candidates and the visited ones
+    """
     return [x for x in lst_to_check if x.configuration not in lst_visited]
 
 # Implement the search algorithms here
 @profile
 def dfs_search(tower, stack = [], explored = [], depth = 0):
+    """
+    Depth first search. Visit the newest made configuration until it is solved.
+    """
     stack.append(tower)
 
     while stack:
@@ -140,6 +150,9 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
         depth += 1
 @profile
 def bfs_search(tower, stack = [], explored = [], depth = 0):
+    """
+    Breadth first search. Visit every child node from every tower until one is solved.
+    """
     stack.append(tower)
 
     while stack:
@@ -160,7 +173,10 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
         depth += 1
 
 def heuristic(tower):
-
+    """
+    Returns the heuristic of a tower. The heuristic is the highest number of same-coloured blocks in the configuration
+    Negative since it is a contrast to the steps taken to achive the configuration 
+    """
     cols = []
     counts = []
     for x in tower.configuration:
@@ -171,13 +187,22 @@ def heuristic(tower):
     return - max(counts)
 
 def steps(tower):
+    """
+    Returns the number of steps taken to achive the current config from the initial one
+    """
     return len(tower.get_path())
 
 def evaluation(tower):
+    """
+    Evaluates the steps and heuristic. Best case is lowest possible -> few steps and many same-coloured cubes
+    """
     return steps(tower) + heuristic(tower)
+
 @profile
 def a_star_search(tower, stack = [], depth = 0):
-    # Implement A* Search
+    """
+    Evaluates the tower with the best (lowest) evaluation to be explored next, until solved
+    """
     stack.append(tower)
 
     while stack:
@@ -197,7 +222,7 @@ def a_star_search(tower, stack = [], depth = 0):
 # ...
 @profile
 def gfs_search(tower, depth = 0):
-    """ Greedy first search?"""
+    """ Greedy first search. Evaluates the heuristic of the child nodes and uses the child with best heuristic each time """
     while tower.check_cube() != True:
         depth += 1
         children = child_nodes(tower)
@@ -209,6 +234,9 @@ def gfs_search(tower, depth = 0):
     return tower
 
 def search_result(search_method, tower):
+    """
+    Function to run the search algorithms with timing and vizualising them
+    """
     print("\n" + "=" * 40 + "\n")  
 
     start = time.time()
@@ -222,7 +250,7 @@ if __name__ == '__main__':
     tower = CubeTower(initial_configuration)
     tower.visualize()
     
-    search_result(a_star_search, tower)
+    #search_result(a_star_search, tower)
     search_result(gfs_search, tower)
-    search_result(dfs_search, tower)
-    search_result(bfs_search, tower)
+    #search_result(dfs_search, tower)
+    #search_result(bfs_search, tower)
