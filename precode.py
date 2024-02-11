@@ -241,16 +241,28 @@ def search_result(search_method, tower):
 
     start = time.time()
     sollution = search_method(tower)
-    end = time.time()
-    print(f"{search_method.__name__} search time: {end - start:.6f} seconds")
+    time_taken = time.time() - start
+    print(f"{search_method.__name__} search time: {time_taken:.6f} seconds")
+
+    length = len(sollution.get_path())
     sollution.visualize_path()
+    return length, time_taken
 
 if __name__ == '__main__':
-    initial_configuration = ["green","red","blue","blue","red","yellow"]
-    tower = CubeTower(initial_configuration)
-    tower.visualize()
+
+    initial1_configuration = ["green","red","blue","yellow","red","yellow"]#,"blue"]#,"green","blue","yellow"]#,"red","yellow"]
+    tower1 = CubeTower(initial1_configuration)
+    tower1.visualize()
     
-    #search_result(a_star_search, tower)
-    search_result(gfs_search, tower)
-    #search_result(dfs_search, tower)
-    #search_result(bfs_search, tower)
+    """initial2_configuration = ["green","red","blue","blue","red"]#,"yellow"]
+    tower2 = CubeTower(initial2_configuration)
+    tower2.visualize()
+    
+    initial3_configuration = ["green","red","blue","blue","red","yellow"]
+    tower3 = CubeTower(initial3_configuration)
+    tower3.visualize()"""
+    
+    search_result(a_star_search, tower1)
+    search_result(gfs_search, tower1)
+    #search_result(dfs_search, tower1)
+    #search_result(bfs_search, tower1)
