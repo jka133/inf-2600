@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from memory_profiler import profile
+import tracemalloc
 import time
 
 class CubeTower:
@@ -125,7 +125,6 @@ def unvisited(lst_to_check, lst_visited):
     return [x for x in lst_to_check if x.configuration not in lst_visited]
 
 # Implement the search algorithms here
-@profile
 def dfs_search(tower, stack = [], explored = [], depth = 0):
     """
     Depth first search. Visit the newest made configuration until it is solved.
@@ -138,7 +137,7 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
         if current.check_cube() == True:
             print(f"DFS success after {depth} operations")
             #current.visualize_path()
-            return current
+            return current, depth
         
         explored.append(current.configuration)
         
@@ -148,7 +147,7 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
         stack = unvisited_child_nodes + stack
         
         depth += 1
-@profile
+
 def bfs_search(tower, stack = [], explored = [], depth = 0):
     """
     Breadth first search. Visit every child node from every tower until one is solved.
@@ -161,7 +160,7 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
         if current.check_cube() == True:
             print(f"BFS success after {depth} operations")
             #current.visualize_path()
-            return current
+            return current, depth
         
         explored.append(current.configuration)
         
@@ -198,12 +197,12 @@ def evaluation(tower):
     """
     return steps(tower) + heuristic(tower)
 
-@profile
-def a_star_search(tower, stack = [], depth = 0):
+def a_star_search(tower):
     """
     Evaluates the tower with the best (lowest) evaluation to be explored next, until solved
     """
-    stack.append(tower)
+    stack = [tower]
+    depth = 0
 
     while stack:
         current = stack.pop(0)
@@ -215,14 +214,11 @@ def a_star_search(tower, stack = [], depth = 0):
         stack.sort(key=evaluation) # Sorts list based on evaluation(tower) in ascending order
         
     print(f"A* success after {depth} operations")
-    #current.visualize_path()
-    return current
+    return current, depth
 
-# Additional advanced search algorithm
-# ...
-@profile
-def gfs_search(tower, depth = 0):
+def gfs_search(tower):
     """ Greedy first search. Evaluates the heuristic of the child nodes and uses the child with best heuristic each time """
+    depth = 0
     while tower.check_cube() != True:
         depth += 1
         children = child_nodes(tower)
@@ -231,38 +227,76 @@ def gfs_search(tower, depth = 0):
         
     print(f'GFS success after {depth} operations')
     #current.visualize_path()
-    return tower
+    return tower, depth
 
 def search_result(search_method, tower):
     """
-    Function to run the search algorithms with timing and vizualising them
+    Function to run the search algorithms with timing and memory tracing and vizualising them
     """
-    print("\n" + "=" * 40 + "\n")  
 
+    tracemalloc.start()
     start = time.time()
-    sollution = search_method(tower)
+    solution, n_operations = search_method(tower)
+    peak_memory = tracemalloc.get_traced_memory()[1]
     time_taken = time.time() - start
-    print(f"{search_method.__name__} search time: {time_taken:.6f} seconds")
+    tracemalloc.stop()
 
-    length = len(sollution.get_path())
-    sollution.visualize_path()
-    return length, time_taken
+    length = len(solution.get_path())
+    solution.visualize_path()
+    return length, n_operations, time_taken, peak_memory
+
+def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst):
+    # Set up the figure and axes
+    # Bar plot for solution length
+    fig1, ax1 = plt.subplots(figsize=(10, 5))
+    ax1.bar(algorithm_names, solution_len_lst, color='skyblue')
+    ax1.set_title('Solution Length by Algorithm')
+    ax1.set_ylabel('Solution Length')
+    ax1.set_xlabel('Algorithm')
+    plt.show()
+
+    # Bar plot for number of operations
+    fig3, ax3 = plt.subplots(figsize=(10, 5))
+    ax3.bar(algorithm_names, n_operations_lst, color='blueviolet')
+    ax3.set_title('Operations Made by Algorithm')
+    ax3.set_ylabel('Operations Made')
+    ax3.set_xlabel('Algorithm')
+    plt.show()
+
+    # Bar plot for time taken
+    fig3, ax3 = plt.subplots(figsize=(10, 5))
+    ax3.bar(algorithm_names, time_taken_lst, color='lightgreen')
+    ax3.set_title('Time Taken by Algorithm')
+    ax3.set_ylabel('Time Taken (seconds)')
+    ax3.set_xlabel('Algorithm')
+    plt.show()
+
+    # Bar plot for memory used
+    fig4, ax4 = plt.subplots(figsize=(10, 5))
+    ax4.bar(algorithm_names, memory_used_lst, color='salmon')
+    ax4.set_title('Memory Used by Algorithm')
+    ax4.set_ylabel('Memory Used (MB)')
+    ax4.set_xlabel('Algorithm')
+    plt.show()
+
 
 if __name__ == '__main__':
 
-    initial1_configuration = ["green","red","blue","yellow","red","yellow"]#,"blue"]#,"green","blue","yellow"]#,"red","yellow"]
+    initial1_configuration = ["green","red","blue","yellow","red"]
     tower1 = CubeTower(initial1_configuration)
-    tower1.visualize()
-    
-    """initial2_configuration = ["green","red","blue","blue","red"]#,"yellow"]
+    initial2_configuration = ["green","red","blue","yellow","red","green"]
     tower2 = CubeTower(initial2_configuration)
-    tower2.visualize()
-    
-    initial3_configuration = ["green","red","blue","blue","red","yellow"]
-    tower3 = CubeTower(initial3_configuration)
-    tower3.visualize()"""
-    
-    search_result(a_star_search, tower1)
-    search_result(gfs_search, tower1)
-    #search_result(dfs_search, tower1)
-    #search_result(bfs_search, tower1)
+    towers = [tower2, tower1]
+
+    algorithms = [a_star_search, gfs_search, dfs_search, bfs_search]
+    algorithm_names = ['A*', 'Greedy', 'DFS', 'BFS']
+
+    for t in towers:
+        solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst = [],[],[],[]
+        for algo in algorithms:
+            solution_len, n_operations, time_taken, memory_used = search_result(algo, t)
+            solution_len_lst.append(solution_len)
+            n_operations_lst.append(n_operations)
+            time_taken_lst.append(time_taken)
+            memory_used_lst.append(memory_used)
+        bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst)
