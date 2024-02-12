@@ -124,7 +124,6 @@ def unvisited(lst_to_check, lst_visited):
     """
     return [x for x in lst_to_check if x.configuration not in lst_visited]
 
-# Implement the search algorithms here
 def dfs_search(tower, stack = [], explored = [], depth = 0):
     """
     Depth first search. Visit the newest made configuration until it is solved.
@@ -242,7 +241,7 @@ def search_result(search_method, tower):
     tracemalloc.stop()
 
     length = len(solution.get_path())
-    solution.visualize_path()
+    #solution.visualize_path()
     return length, n_operations, time_taken, peak_memory
 
 def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst):
@@ -282,11 +281,13 @@ def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst
 
 if __name__ == '__main__':
 
-    initial1_configuration = ["green","red","blue","yellow","red"]
-    tower1 = CubeTower(initial1_configuration)
-    initial2_configuration = ["green","red","blue","yellow","red","green"]
-    tower2 = CubeTower(initial2_configuration)
-    towers = [tower2, tower1]
+    config1 = ["green","red","blue"]
+    config2 = ["green","red","blue","yellow"]
+    config3 = ["green","red","blue","yellow","red"]
+    config4 = ["blue","red","blue","red","yellow"]
+    config5 = ["green","red","blue","yellow","red","green"]
+    tower1,tower2,tower3,tower4,tower5 = CubeTower(config1),CubeTower(config2),CubeTower(config3),CubeTower(config4),CubeTower(config5)
+    towers = [tower1, tower2, tower3, tower4, tower5]
 
     algorithms = [a_star_search, gfs_search, dfs_search, bfs_search]
     algorithm_names = ['A*', 'Greedy', 'DFS', 'BFS']
