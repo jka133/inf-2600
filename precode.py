@@ -63,7 +63,7 @@ class CubeTower:
         while current.parent is not None:
             path.append(current.configuration)
             current = current.parent
-        path.append(current.configuration)
+        path.append(current.configuration) # Added this as the original config should be included
         path.reverse()
         return path
     
@@ -79,11 +79,10 @@ class CubeTower:
         :param index: The index of the cube to rotate.
         :param hold_index: The index of the cube to hold, if any.
         """
-        # Implement the rotation logic
+
         new_configuration = [x for x in self.configuration]
         if hold_index == 0:
             hold_index = None
-        
         
         if hold_index != None:
             for i in range(index, hold_index, 1):
@@ -96,26 +95,25 @@ class CubeTower:
 
     def next_color(self, index, new_configuration):
         """
-        Returns the next colour for the cube in the towers order
+        Returns the new configuration when cube "index" is rotated
         """
         color = new_configuration[index]
-        #print(self.order.index(color) + 1 )
-        next_color_index = self.order.index(color) + 1 
-        if (self.order.index(color) + 1) < len(self.order): 
+
+        if (self.order.index(color) + 1) < len(self.order): # If the next colour index is in range
             next_color_index = self.order.index(color) + 1 
-        else:
-            next_color_index = self.order.index(color) - 3
+        else: # Subtract the length of the colour order to arrive at the correct colour
+            next_color_index = self.order.index(color) - len(self.order) + 1
 
         return self.order[next_color_index]
 
 def child_nodes(tower):
     """
-    Returns a list of the possible tower to be made in one move from the tower given
+    Returns a list of the possible towers to be made in one move from the tower given
     """
     lst = []
     for i in range(0, tower.height, 1):
         for j in range(i+1, tower.height, 1):
-            lst.append(tower.rotate_cube(i, j))
+            lst.append(tower.rotate_cube(i, j)) # Append the rotated tower objects
     return lst
 
 def unvisited(lst_to_check, lst_visited):
@@ -151,13 +149,12 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
     Breadth first search. Visit every child node from every tower until one is solved.
     """
     stack.append(tower)
-
+    # Very similar to DFS
     while stack:
         current = stack.pop(0)
 
         if current.check_cube() == True:
             print(f"BFS success after {depth} operations")
-            #current.visualize_path()
             return current, depth
         
         explored.append(current.configuration)
@@ -240,7 +237,7 @@ def search_result(search_method, tower):
     tracemalloc.stop()
 
     length = len(solution.get_path())
-    #solution.visualize_path()
+    solution.visualize_path()
     return length, n_operations, time_taken, peak_memory
 
 def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst):
