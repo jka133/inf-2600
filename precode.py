@@ -128,22 +128,21 @@ def dfs_search(tower, stack = [], explored = [], depth = 0):
     """
     Depth first search. Visit the newest made configuration until it is solved.
     """
-    stack.append(tower)
+    stack.append(tower) # List of towers to explore
 
     while stack:
         current = stack.pop(0)
 
         if current.check_cube() == True:
             print(f"DFS success after {depth} operations")
-            #current.visualize_path()
             return current, depth
         
-        explored.append(current.configuration)
+        explored.append(current.configuration) # Note the current as explored if not solved
         
         children = child_nodes(current)
-        unvisited_child_nodes = unvisited(children, explored)
+        unvisited_child_nodes = unvisited(children, explored) # Make unvisited child nodes
 
-        stack = unvisited_child_nodes + stack
+        stack = unvisited_child_nodes + stack # Add the new nodes first to the stack
         
         depth += 1
 
@@ -166,7 +165,7 @@ def bfs_search(tower, stack = [], explored = [], depth = 0):
         children = child_nodes(current)
         unvisited_child_nodes = unvisited(children, explored)
         
-        stack = stack + unvisited_child_nodes
+        stack = stack + unvisited_child_nodes # Add the new nodes last in the stack as the breadth should be explored first
         
         depth += 1
 
@@ -182,19 +181,19 @@ def heuristic(tower):
             cols.append(x)
             counts.append(tower.configuration.count(x))
 
-    return - max(counts)
+    return - max(counts) # Measure of the configurations distance to solution
 
 def steps(tower):
     """
     Returns the number of steps taken to achive the current config from the initial one
     """
-    return len(tower.get_path())
+    return len(tower.get_path()) # The steps taken
 
 def evaluation(tower):
     """
     Evaluates the steps and heuristic. Best case is lowest possible -> few steps and many same-coloured cubes
     """
-    return steps(tower) + heuristic(tower)
+    return steps(tower) + heuristic(tower) # The sum of moves and distance to solution
 
 def a_star_search(tower):
     """
@@ -210,7 +209,8 @@ def a_star_search(tower):
 
         depth += 1
         stack += child_nodes(current)
-        stack.sort(key=evaluation) # Sorts list based on evaluation(tower) in ascending order
+        # Sorts stack based on evaluation(tower) in ascending order
+        stack.sort(key=evaluation) # The lowest evaluation is the least moves and best heuristic
         
     print(f"A* success after {depth} operations")
     return current, depth
@@ -221,11 +221,10 @@ def gfs_search(tower):
     while tower.check_cube() != True:
         depth += 1
         children = child_nodes(tower)
-        children.sort(key=heuristic)
-        tower = children[0]
+        children.sort(key=heuristic) # Only evaluate the heuristic of the current nodes child nodes
+        tower = children[0] # Pick the best next step, without regard of previous towers
         
     print(f'GFS success after {depth} operations')
-    #current.visualize_path()
     return tower, depth
 
 def search_result(search_method, tower):
@@ -233,9 +232,9 @@ def search_result(search_method, tower):
     Function to run the search algorithms with timing and memory tracing and vizualising them
     """
 
-    tracemalloc.start()
-    start = time.time()
-    solution, n_operations = search_method(tower)
+    tracemalloc.start() # Start memory trace
+    start = time.time() # Start time capture
+    solution, n_operations = search_method(tower) # Perform algorithm on tower
     peak_memory = tracemalloc.get_traced_memory()[1]
     time_taken = time.time() - start
     tracemalloc.stop()
@@ -245,6 +244,9 @@ def search_result(search_method, tower):
     return length, n_operations, time_taken, peak_memory
 
 def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst):
+    """
+    Function to plot solution length, memory used, time taken and moves made for the algorithms
+    """
     # Set up the figure and axes
     # Bar plot for solution length
     fig1, ax1 = plt.subplots(figsize=(10, 5))
@@ -255,11 +257,11 @@ def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst
     plt.show()
 
     # Bar plot for number of operations
-    fig3, ax3 = plt.subplots(figsize=(10, 5))
-    ax3.bar(algorithm_names, n_operations_lst, color='blueviolet')
-    ax3.set_title('Operations Made by Algorithm')
-    ax3.set_ylabel('Operations Made')
-    ax3.set_xlabel('Algorithm')
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+    ax2.bar(algorithm_names, n_operations_lst, color='blueviolet')
+    ax2.set_title('Operations Made by Algorithm')
+    ax2.set_ylabel('Operations Made')
+    ax2.set_xlabel('Algorithm')
     plt.show()
 
     # Bar plot for time taken
@@ -280,18 +282,20 @@ def bar_plot(algorithm_names, solution_len_lst, n_operations_lst, time_taken_lst
 
 
 if __name__ == '__main__':
-
+    # Tower configurations
     config1 = ["green","red","blue"]
     config2 = ["green","red","blue","yellow"]
     config3 = ["green","red","blue","yellow","red"]
     config4 = ["blue","red","blue","red","yellow"]
     config5 = ["green","red","blue","yellow","red","green"]
+    # Tower initializations
     tower1,tower2,tower3,tower4,tower5 = CubeTower(config1),CubeTower(config2),CubeTower(config3),CubeTower(config4),CubeTower(config5)
     towers = [tower1, tower2, tower3, tower4, tower5]
 
     algorithms = [a_star_search, gfs_search, dfs_search, bfs_search]
     algorithm_names = ['A*', 'Greedy', 'DFS', 'BFS']
 
+    # Solving each tower and reviewing them
     for t in towers:
         solution_len_lst, n_operations_lst, time_taken_lst, memory_used_lst = [],[],[],[]
         for algo in algorithms:
