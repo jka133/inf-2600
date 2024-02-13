@@ -1,4 +1,9 @@
-All sollutions will be presented at once.
+All solutions will be presented once they are found.
+The algorithms are being put to use on one tower at the time. The path and information on the solutions are being plotted to the user.
+
+*BFS uses some time to find teh solution on high towers, keep this in mind.
+
+Script is tested and run in this environment.
 
 Python 3.11.2
 (venv)
