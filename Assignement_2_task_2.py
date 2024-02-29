@@ -253,4 +253,20 @@ class CartPole2DEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             pygame.quit()
             self.isopen = False
 
-# env = CartPole2DEnv()
+env = CartPole2DEnv()
+
+env.observation_space.sample()
+nb_actions = env.action_space.n
+
+episodes = 20
+for episode in range(1, episodes+1):
+    state = env.reset()
+    done = False
+    score = 0 
+    
+    while not done:
+        env.render()
+        action = env.action_space.sample()
+        n_state, reward, done, truncated, info = env.step(action)
+        score+=reward
+    print('Episode:{} Score:{}'.format(episode, score))
