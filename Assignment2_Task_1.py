@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 # For tips on running notebooks in Google Colab, see
 # https://pytorch.org/tutorials/beginner/colab
 #!pip install matplotlib
-get_ipython().run_line_magic('matplotlib', 'inline')
+#get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # 
@@ -53,13 +51,10 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # Gym project and maintained by the same team since Gym v0.19.
 # If you are running this in Google Colab, run:
 
-# In[2]:
 
 
-get_ipython().run_cell_magic('bash', '', '#pip3 install gymnasium[classic_control]\n')
+#get_ipython().run_cell_magic('bash', '', '#pip3 install gymnasium[classic_control]\n')
 
-
-# In[3]:
 
 
 #### For Windows System:
@@ -73,16 +68,13 @@ get_ipython().run_cell_magic('bash', '', '#pip3 install gymnasium[classic_contro
 # -  automatic differentiation (``torch.autograd``)
 # 
 
-# In[4]:
 
 
 # !pip install torch==1.8.1
 # conda install pytorch==1.8.1 torchvision torchaudio -c pytorch
 
 
-# In[5]:
-
-
+from Assignement_2_task_2 import env as env
 import gymnasium as gym
 import math
 import random
@@ -96,7 +88,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-env = gym.make("CartPole-v1")
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -129,8 +120,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 
 # 
 # 
-
-# In[6]:
 
 
 Transition = namedtuple('Transition',
@@ -222,7 +211,6 @@ class ReplayMemory(object):
 # 
 # 
 
-# In[7]:
 
 
 class DQN(nn.Module):
@@ -264,7 +252,6 @@ class DQN(nn.Module):
 # 
 # 
 
-# In[8]:
 
 
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
@@ -360,8 +347,6 @@ def plot_durations(show_result=False):
 # 
 # 
 # 
-
-# In[9]:
 
 
 def optimize_model():
