@@ -207,11 +207,6 @@ class ReplayMemory(object):
 # $Q(s, \mathrm{right})$ (where $s$ is the input to the
 # network). In effect, the network is trying to predict the *expected return* of
 # taking each action given the current input.
-# 
-# 
-# 
-
-
 
 class DQN(nn.Module):
 
@@ -248,11 +243,6 @@ class DQN(nn.Module):
 #    the official evaluations). The plot will be underneath the cell
 #    containing the main training loop, and will update after every
 #    episode.
-# 
-# 
-# 
-
-
 
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
 # GAMMA is the discount factor as mentioned in the previous section
@@ -282,9 +272,7 @@ target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
-
 steps_done = 0
-
 
 def select_action(state):
     global steps_done
@@ -301,9 +289,7 @@ def select_action(state):
     else:
         return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
 
-
 episode_durations = []
-
 
 def plot_durations(show_result=False):
     plt.figure(1)
@@ -344,9 +330,6 @@ def plot_durations(show_result=False):
 # added stability. The target network is updated at every step with a 
 # [soft update](https://arxiv.org/pdf/1509.02971.pdf)_ controlled by 
 # the hyperparameter ``TAU``, which was previously defined.
-# 
-# 
-# 
 
 
 def optimize_model():
@@ -395,7 +378,6 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
-
 # Below, you can find the main training loop. At the beginning we reset
 # the environment and obtain the initial ``state`` Tensor. Then, we sample
 # an action, execute it, observe the next state and the reward (always
@@ -408,12 +390,6 @@ def optimize_model():
 # You should see the model constantly achieve 500 steps within 600 training 
 # episodes. Training RL agents can be a noisy process, so restarting training
 # can produce better results if convergence is not observed.
-# 
-# 
-# 
-
-# In[10]:
-
 
 if torch.cuda.is_available():
     num_episodes = 600
@@ -463,7 +439,6 @@ plot_durations(show_result=True)
 plt.ioff()
 plt.show()
 
-
 # Here is the diagram that illustrates the overall resulting data flow.
 # 
 # .. figure:: /_static/img/reinforcement_learning_diagram.jpg
@@ -474,6 +449,3 @@ plt.show()
 # Optimization picks a random batch from the replay memory to do training of the
 # new policy. The "older" target_net is also used in optimization to compute the
 # expected Q values. A soft update of its weights are performed at every step.
-# 
-# 
-# 
