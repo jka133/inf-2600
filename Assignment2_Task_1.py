@@ -280,14 +280,15 @@ def select_action(state):
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if sample > eps_threshold:
+    #print(sample, eps_threshold)
+    if sample > eps_threshold: # I think this is where EXPLOITATION vs EXPLORATION is changed
         with torch.no_grad():
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1).indices.view(1, 1)
+            return policy_net(state).max(1).indices.view(1, 1) #Action with highest expected reward (Exploitation)
     else:
-        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
+        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long) # Random sample (Exploration)
 
 episode_durations = []
 
