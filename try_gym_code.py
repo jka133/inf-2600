@@ -2,10 +2,11 @@ import warnings
 # Ignore all DeprecationWarnings from NumPy
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+import sys
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
-env = gym.make("CartPole-v1", render_mode="human")
+env = gym.make("CartPole-v1")
 nb_actions = env.action_space.n
 env.observation_space.sample()
 
@@ -32,26 +33,27 @@ def continous_to_discrete(state, observation_space):
     
     return tuple(discrete)
 
-exploration_prob = 1
-exploration_decay = 0.95
+exploration_prob = 1 # These variables must be optimized 
+exploration_decay = 0.001
 min_exploration_prob = 0.01
-discount_factor = 0.9
+discount_factor = 0.99
 
-learning_rate = 0.15
+learning_rate = 0.1
 
-episodes = 100
+episodes = 10000
 max_episode_iter = 1000
 rewards_per_episode = []
 for e in range(episodes):
 
-    state, empty_dict = env.reset()
+    state, unused_dict = env.reset()
     discrete_state = continous_to_discrete(state, observation_space)
     done = False
 
     total_reward = 0
 
     for _ in range(max_episode_iter):
-        if np.random.uniform(0,1) < exploration_prob:
+        sample = np.random.random()
+        if sample < exploration_prob:
             action = env.action_space.sample()
         else:
             # Qtable must be implemented to determine action
@@ -62,24 +64,40 @@ for e in range(episodes):
         total_reward += reward
         # Update Qtable
 
-        # I dont understand the updating of the Q table and values
-        disc_next_state = continous_to_discrete(next_state, observation_space)
+        discrete_next_state = continous_to_discrete(next_state, observation_space)
+
         old_q_value = q_table[discrete_state + (action, )]
 
-        next_q_max = np.max(q_table[disc_next_state])
+        next_q_max = np.max(q_table[discrete_next_state])
 
         new_q_value = (1 - learning_rate) * old_q_value + learning_rate * (reward + discount_factor * next_q_max)
 
-        q_table[discrete_state + (action,)] = new_q_value
+        q_table[discrete_state + (action, )] = new_q_value
         # Understand the above
 
         if done:
             break
 
         state = next_state
+        discrete_state = discrete_next_state
 
-    exploration_proba = max(min_exploration_prob, np.exp(-exploration_decay*e))
+    exploration_prob = max(min_exploration_prob, np.exp(-exploration_decay*e)) # Number of episodes changes the decay
+    #exploration_prob = max(min_exploration_prob, exploration_decay*exploration_prob)
     rewards_per_episode.append(total_reward)
+    print(f" Episode {e}", end="\r")
+    sys.stdout.flush()
+
+new_rewards_per_episode = []
+
+# Iterate over each step in rewards_per_episode
+for i in range(len(rewards_per_episode)):
+    if i < 100:
+        new_rewards_per_episode.append(0)  # Append 0 for the first 100 steps
+    else:
+        # Calculate the mean of the previous 100 rewards
+        mean_reward = sum(rewards_per_episode[i-100:i]) / 100
+        new_rewards_per_episode.append(mean_reward)
 
 plt.plot(rewards_per_episode)
+plt.plot(new_rewards_per_episode)
 plt.show()
