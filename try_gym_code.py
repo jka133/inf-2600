@@ -38,10 +38,10 @@ exploration_decay = 0.001
 min_exploration_prob = 0.01
 discount_factor = 0.99
 
-learning_rate = 0.1
+learning_rate = 0.125 # Try different values for this
 
-episodes = 10000
-max_episode_iter = 1000
+episodes = 15000
+max_episode_iter = 10000
 rewards_per_episode = []
 for e in range(episodes):
 
@@ -87,17 +87,22 @@ for e in range(episodes):
     print(f" Episode {e}", end="\r")
     sys.stdout.flush()
 
-new_rewards_per_episode = []
+meanhundred_rewards_per_episode = []
 
 # Iterate over each step in rewards_per_episode
 for i in range(len(rewards_per_episode)):
     if i < 100:
-        new_rewards_per_episode.append(0)  # Append 0 for the first 100 steps
+        meanhundred_rewards_per_episode.append(0)  # Append 0 for the first 100 steps
     else:
         # Calculate the mean of the previous 100 rewards
         mean_reward = sum(rewards_per_episode[i-100:i]) / 100
-        new_rewards_per_episode.append(mean_reward)
+        meanhundred_rewards_per_episode.append(mean_reward)
+
+
+# Calculate the mean reward for every thousand steps
+for i in range(0, len(rewards_per_episode), 1000):
+    print(f"Thousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}")
 
 plt.plot(rewards_per_episode)
-plt.plot(new_rewards_per_episode)
+plt.plot(meanhundred_rewards_per_episode)
 plt.show()
