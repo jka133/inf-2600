@@ -6,13 +6,14 @@ import sys
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
+import math
 env = gym.make("CartPole-v1")
 nb_actions = env.action_space.n
 env.observation_space.sample()
 
 #https://towardsdatascience.com/q-learning-algorithm-from-explanation-to-implementation-cdbeda2ea187
 
-nb_chunks = 50
+nb_chunks = 100
 cart_pos = np.linspace(-4.8, 4.8, nb_chunks)
 cart_vel = np.linspace(-20, 20, nb_chunks) # Actually -inf and inf
 pole_ang = np.linspace(-0.418, 0.418, nb_chunks)
@@ -84,7 +85,7 @@ for e in range(episodes):
     exploration_prob = max(min_exploration_prob, np.exp(-exploration_decay*e)) # Number of episodes changes the decay
     #exploration_prob = max(min_exploration_prob, exploration_decay*exploration_prob)
     rewards_per_episode.append(total_reward)
-    print(f" Episode {e}", end="\r")
+    print(f" Episode {e} -- {int(100*e/episodes)}% finished", end="\r")
     sys.stdout.flush()
 
 meanhundred_rewards_per_episode = []
@@ -101,8 +102,14 @@ for i in range(len(rewards_per_episode)):
 
 # Calculate the mean reward for every thousand steps
 for i in range(0, len(rewards_per_episode), 1000):
-    print(f"Thousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}")
+    print(f"Thousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}  ")
+
 
 plt.plot(rewards_per_episode)
 plt.plot(meanhundred_rewards_per_episode)
+plt.show()
+
+#https://stackoverflow.com/questions/24809757/how-to-make-a-histogram-from-a-list-of-data-and-plot-it-with-matplotlib
+counts, bins = np.histogram(rewards_per_episode, bins=500)
+plt.stairs(counts, bins, fill=True)
 plt.show()
