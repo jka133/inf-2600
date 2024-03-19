@@ -2,29 +2,29 @@ import warnings
 # Ignore all DeprecationWarnings from NumPy
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-import sys
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
 import math
 env = gym.make("CartPole-v1")
-nb_actions = env.action_space.n
+N_ACTIONS = env.action_space.n
 env.observation_space.sample()
 
 #https://towardsdatascience.com/q-learning-algorithm-from-explanation-to-implementation-cdbeda2ea187
 
-nb_chunks = 100
-cart_pos = np.linspace(-4.8, 4.8, nb_chunks)
-cart_vel = np.linspace(-20, 20, nb_chunks) # Actually -inf and inf
-pole_ang = np.linspace(-0.418, 0.418, nb_chunks)
-pole_vel = np.linspace(-20, 20, nb_chunks) # Actually -inf and inf
+N_CHUNKS = 100
+cart_pos = np.linspace(-4.8, 4.8, N_CHUNKS)
+cart_vel = np.linspace(-20, 20, N_CHUNKS) # Actually -inf and inf
+pole_ang = np.linspace(-0.418, 0.418, N_CHUNKS)
+pole_vel = np.linspace(-20, 20, N_CHUNKS) # Actually -inf and inf
 
 observation_space = [cart_pos, cart_vel, pole_ang, pole_vel]
 
-q_table_shape = cart_pos.shape[0], cart_vel.shape[0], pole_ang.shape[0], pole_vel.shape[0], nb_actions
-q_table = np.zeros(q_table_shape)
+Q_TABLE_SHAPE = cart_pos.shape[0], cart_vel.shape[0], pole_ang.shape[0], pole_vel.shape[0], N_ACTIONS
+q_table = np.zeros(Q_TABLE_SHAPE)
 
 def continous_to_discrete(state, observation_space):
+    #https://ai.stackexchange.com/questions/12255/can-q-learning-be-used-for-continuous-state-or-action-spaces
     discrete = []
 
     for value, space_chunk in zip(state, observation_space):
@@ -34,17 +34,18 @@ def continous_to_discrete(state, observation_space):
     
     return tuple(discrete)
 
-exploration_prob = 1 # These variables must be optimized 
-exploration_decay = 0.001
-min_exploration_prob = 0.01
-discount_factor = 0.99
+EXPLORATION_PROB = 1 # These variables must be optimized 
+EXPLORATION_DECAY = 0.001
+MIN_EXPLORATION_PROB = 0.01
+#https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
+DISCOUNT_FACTOR = 0.99
 
-learning_rate = 0.125 # Try different values for this
+LEARNING_RATE = 0.2 # Try different values for this
 
-episodes = 15000
-max_episode_iter = 10000
+N_EPISODES = 15000
+MAX_EPISODE_LEN = 10000
 rewards_per_episode = []
-for e in range(episodes):
+for e in range(N_EPISODES):
 
     state, unused_dict = env.reset()
     discrete_state = continous_to_discrete(state, observation_space)
@@ -52,41 +53,34 @@ for e in range(episodes):
 
     total_reward = 0
 
-    for _ in range(max_episode_iter):
+    for _ in range(MAX_EPISODE_LEN):
         sample = np.random.random()
-        if sample < exploration_prob:
+        if sample < EXPLORATION_PROB:
             action = env.action_space.sample()
         else:
-            # Qtable must be implemented to determine action
             action = np.argmax(q_table[discrete_state])
 
         next_state, reward, done, truncated, info = env.step(action)
-
-        total_reward += reward
-        # Update Qtable
-
         discrete_next_state = continous_to_discrete(next_state, observation_space)
 
         old_q_value = q_table[discrete_state + (action, )]
+        next_q_value = np.max(q_table[discrete_next_state])
 
-        next_q_max = np.max(q_table[discrete_next_state])
-
-        new_q_value = (1 - learning_rate) * old_q_value + learning_rate * (reward + discount_factor * next_q_max)
-
+        # Update Qtable
+        new_q_value = (1 - LEARNING_RATE) * old_q_value + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_q_value)
         q_table[discrete_state + (action, )] = new_q_value
-        # Understand the above
+        
+        total_reward += reward
+        discrete_state = discrete_next_state
+        state = next_state
 
         if done:
             break
 
-        state = next_state
-        discrete_state = discrete_next_state
-
-    exploration_prob = max(min_exploration_prob, np.exp(-exploration_decay*e)) # Number of episodes changes the decay
+    EXPLORATION_PROB = max(MIN_EXPLORATION_PROB, np.exp(-EXPLORATION_DECAY*e)) # Number of episodes changes the decay
     #exploration_prob = max(min_exploration_prob, exploration_decay*exploration_prob)
     rewards_per_episode.append(total_reward)
-    print(f" Episode {e} -- {int(100*e/episodes)}% finished", end="\r")
-    sys.stdout.flush()
+    print(f" Episode {e} -- {int(100*e/N_EPISODES)}% finished", end="\r")
 
 meanhundred_rewards_per_episode = []
 
@@ -106,10 +100,15 @@ for i in range(0, len(rewards_per_episode), 1000):
 
 
 plt.plot(rewards_per_episode)
-plt.plot(meanhundred_rewards_per_episode)
+plt.plot(meanhundred_rewards_per_episode, label="Mean reward per hundred episodes")
+plt.xlabel("Episode")
+plt.ylabel("Duration (reward)")
+plt.legend()
 plt.show()
 
 #https://stackoverflow.com/questions/24809757/how-to-make-a-histogram-from-a-list-of-data-and-plot-it-with-matplotlib
 counts, bins = np.histogram(rewards_per_episode, bins=500)
 plt.stairs(counts, bins, fill=True)
+plt.xlabel("Duration (reward)")
+plt.ylabel("Frequency of duration")
 plt.show()
