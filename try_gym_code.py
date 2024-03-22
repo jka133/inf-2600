@@ -1,7 +1,3 @@
-import warnings
-# Ignore all DeprecationWarnings from NumPy
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 import numpy as np
 import gym
 import matplotlib.pyplot as plt

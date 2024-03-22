@@ -3,10 +3,6 @@
 #https://towardsdatascience.com/intro-to-reinforcement-learning-temporal-difference-learning-sarsa-vs-q-learning-8b4184bb4978
 #https://github.com/viethoangtranduong/reinforcement-learning/blob/main/SARSA%20vs%20QL/train_SARSA.py
 
-import warnings
-# Ignore all DeprecationWarnings from NumPy
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
