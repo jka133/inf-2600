@@ -43,7 +43,7 @@ DISCOUNT_FACTOR = 0.99
 LEARNING_RATE = 0.2 # Try different values for this
 
 N_EPISODES = 15000
-MAX_EPISODE_LEN = 10000
+MAX_EPISODE_LEN = 500
 rewards_per_episode = []
 for e in range(N_EPISODES):
 
