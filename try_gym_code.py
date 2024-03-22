@@ -40,7 +40,7 @@ MIN_EXPLORATION_PROB = 0.01
 #https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
 DISCOUNT_FACTOR = 0.99
 
-LEARNING_RATE = 0.2 # Try different values for this
+LEARNING_RATE = 0.125 # Try different values for this
 
 N_EPISODES = 15000
 MAX_EPISODE_LEN = 500
