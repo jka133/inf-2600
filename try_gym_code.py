@@ -35,12 +35,12 @@ EXPLORATION_DECAY = 0.001
 MIN_EXPLORATION_PROB = 0.01
 #https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
 DISCOUNT_FACTOR = 0.99
-
 LEARNING_RATE = 0.125 # Try different values for this
 
 N_EPISODES = 15000
 MAX_EPISODE_LEN = 500
 rewards_per_episode = []
+
 for e in range(N_EPISODES):
 
     state, unused_dict = env.reset()
@@ -50,8 +50,8 @@ for e in range(N_EPISODES):
     total_reward = 0
 
     for _ in range(MAX_EPISODE_LEN):
-        sample = np.random.random()
-        if sample < EXPLORATION_PROB:
+
+        if np.random.random() < EXPLORATION_PROB:
             action = env.action_space.sample()
         else:
             action = np.argmax(q_table[discrete_state])
@@ -60,13 +60,18 @@ for e in range(N_EPISODES):
         discrete_next_state = continous_to_discrete(next_state, observation_space)
 
         old_q_value = q_table[discrete_state + (action, )]
+        #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
+        # This part is not on policy as it only regards the highest q-value
         next_q_value = np.max(q_table[discrete_next_state])
 
         # Update Qtable
+        #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
         new_q_value = (1 - LEARNING_RATE) * old_q_value + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_q_value)
         q_table[discrete_state + (action, )] = new_q_value
         
         total_reward += reward
+
+        # "Moving" the states
         discrete_state = discrete_next_state
         state = next_state
 

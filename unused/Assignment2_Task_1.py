@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 # For tips on running notebooks in Google Colab, see
 # https://pytorch.org/tutorials/beginner/colab
@@ -53,13 +51,10 @@
 # Gym project and maintained by the same team since Gym v0.19.
 # If you are running this in Google Colab, run:
 
-# In[2]:
 
 
 #get_ipython().run_cell_magic('bash', '', '#pip3 install gymnasium[classic_control]\n')
 
-
-# In[3]:
 
 
 #### For Windows System:
@@ -73,16 +68,13 @@
 # -  automatic differentiation (``torch.autograd``)
 # 
 
-# In[4]:
 
 
 # !pip install torch==1.8.1
 # conda install pytorch==1.8.1 torchvision torchaudio -c pytorch
 
 
-# In[5]:
-
-
+from Assignement_2_task_2 import env as env
 import gymnasium as gym
 import math
 import random
@@ -96,12 +88,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-# This suggests that if the script is not imported then it should keep the original environment, 
-# else it should use environment from task 2
-if __name__=="__main__":
-    env = gym.make("CartPole-v1")
-else:
-    from Assignement_2_task_2 import env as env
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -134,8 +120,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 
 # 
 # 
-
-# In[6]:
 
 
 Transition = namedtuple('Transition',
@@ -223,12 +207,6 @@ class ReplayMemory(object):
 # $Q(s, \mathrm{right})$ (where $s$ is the input to the
 # network). In effect, the network is trying to predict the *expected return* of
 # taking each action given the current input.
-# 
-# 
-# 
-
-# In[7]:
-
 
 class DQN(nn.Module):
 
@@ -236,14 +214,16 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
+        self.layer3 = nn.Linear(128, 128)
+        self.layer4 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        return self.layer3(x)
+        x = F.relu(self.layer3(x))
+        return self.layer4(x)
 
 
 # ## Training
@@ -263,12 +243,6 @@ class DQN(nn.Module):
 #    the official evaluations). The plot will be underneath the cell
 #    containing the main training loop, and will update after every
 #    episode.
-# 
-# 
-# 
-
-# In[8]:
-
 
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
 # GAMMA is the discount factor as mentioned in the previous section
@@ -298,9 +272,7 @@ target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
-
 steps_done = 0
-
 
 def select_action(state):
     global steps_done
@@ -308,18 +280,17 @@ def select_action(state):
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if sample > eps_threshold:
+    #print(sample, eps_threshold)
+    if sample > eps_threshold: # I think this is where EXPLOITATION vs EXPLORATION is changed
         with torch.no_grad():
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1).indices.view(1, 1)
+            return policy_net(state).max(1).indices.view(1, 1) #Action with highest expected reward (Exploitation)
     else:
-        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
-
+        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long) # Random sample (Exploration)
 
 episode_durations = []
-
 
 def plot_durations(show_result=False):
     plt.figure(1)
@@ -360,11 +331,6 @@ def plot_durations(show_result=False):
 # added stability. The target network is updated at every step with a 
 # [soft update](https://arxiv.org/pdf/1509.02971.pdf)_ controlled by 
 # the hyperparameter ``TAU``, which was previously defined.
-# 
-# 
-# 
-
-# In[9]:
 
 
 def optimize_model():
@@ -413,7 +379,6 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
-
 # Below, you can find the main training loop. At the beginning we reset
 # the environment and obtain the initial ``state`` Tensor. Then, we sample
 # an action, execute it, observe the next state and the reward (always
@@ -426,15 +391,9 @@ def optimize_model():
 # You should see the model constantly achieve 500 steps within 600 training 
 # episodes. Training RL agents can be a noisy process, so restarting training
 # can produce better results if convergence is not observed.
-# 
-# 
-# 
-
-# In[10]:
-
 
 if torch.cuda.is_available():
-    num_episodes = 600
+    num_episodes = 6000
 else:
     num_episodes = 200
 
@@ -470,17 +429,17 @@ for i_episode in range(num_episodes):
         for key in policy_net_state_dict:
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_net.load_state_dict(target_net_state_dict)
-
+        print(f"  {int(100*i_episode/num_episodes)}", end="\r")
         if done:
             episode_durations.append(t + 1)
-            plot_durations()
+            #plot_durations()
             break
 
 print('Complete')
-plot_durations(show_result=True)
-plt.ioff()
+#plot_durations(show_result=True)
+#plt.ioff()
+plt.plot(episode_durations)
 plt.show()
-
 
 # Here is the diagram that illustrates the overall resulting data flow.
 # 
@@ -492,6 +451,3 @@ plt.show()
 # Optimization picks a random batch from the replay memory to do training of the
 # new policy. The "older" target_net is also used in optimization to compute the
 # expected Q values. A soft update of its weights are performed at every step.
-# 
-# 
-# 

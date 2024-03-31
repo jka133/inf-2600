@@ -1,8 +1,3 @@
-#https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
-#https://builtin.com/machine-learning/sarsa
-#https://towardsdatascience.com/intro-to-reinforcement-learning-temporal-difference-learning-sarsa-vs-q-learning-8b4184bb4978
-#https://github.com/viethoangtranduong/reinforcement-learning/blob/main/SARSA%20vs%20QL/train_SARSA.py
-
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
@@ -11,7 +6,9 @@ env = gym.make("CartPole-v1")
 N_ACTIONS = env.action_space.n
 env.observation_space.sample()
 
+# The structure of the program is inspired by:
 #https://towardsdatascience.com/q-learning-algorithm-from-explanation-to-implementation-cdbeda2ea187
+# But it is substansially different since the actions space is continous in this assignment
 
 N_CHUNKS = 100
 cart_pos = np.linspace(-4.8, 4.8, N_CHUNKS)
@@ -33,17 +30,17 @@ def continous_to_discrete(state, observation_space):
         discrete += [ind - 1] # append the chunk indi of the state
     return tuple(discrete)
 
-EXPLORATION_PROB = 1 # These variables must be optimized 
+EXPLORATION_PROB = 1
 ECPLORATION_DECAY = 0.001
 MIN_EXPLORATION_PROB = 0.01
 #https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
 DISCOUNT_FACTOR = 0.99
-
-LEARNING_RATE = 0.125 # Try different values for this
+LEARNING_RATE = 0.125
 
 N_EPISODES = 15000
 MAX_EPISODE_LEN = 10000
 rewards_per_episode = []
+
 for e in range(N_EPISODES):
 
     state, unused_dict = env.reset()
@@ -61,20 +58,27 @@ for e in range(N_EPISODES):
         next_state, reward, done, truncated, info = env.step(action)
         discrete_next_state = continous_to_discrete(next_state, observation_space)
 
+        # Next action exploration is from: 
+        #https://towardsdatascience.com/intro-to-reinforcement-learning-temporal-difference-learning-sarsa-vs-q-learning-8b4184bb4978
         if np.random.random() < EXPLORATION_PROB:
             next_action = env.action_space.sample()
         else:
-            # Qtable must be implemented to determine action
             next_action = np.argmax(q_table[discrete_next_state])
 
         old_q_value = q_table[discrete_state + (action, )]
+        # The next_q_value is different from Qlearning
+        #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
+        # Instead of taking the action with ighest q-value the next action is also on policy
         next_q_value = q_table[discrete_next_state + (next_action, )]
 
         # Update Qtable
-        new_q_value = (1 - LEARNING_RATE) * old_q_value + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_q_value) # This is the only difference from ql
+        # The values put into the update is the only difference from qlearning
+        new_q_value = (1 - LEARNING_RATE) * old_q_value + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_q_value) 
         q_table[discrete_state + (action, )] = new_q_value
 
         total_reward += reward
+
+        # "Moving" the states
         discrete_state = discrete_next_state
         state = next_state
 

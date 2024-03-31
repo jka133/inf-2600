@@ -255,4 +255,4 @@ class CartPole2DEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
 env = CartPole2DEnv()
 
-import Assignment2_Task_1 
+import Assignment2_Task_1
