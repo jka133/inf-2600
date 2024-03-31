@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import gym
 import matplotlib.pyplot as plt
 import math
@@ -6,7 +7,9 @@ env = gym.make("CartPole-v1")
 N_ACTIONS = env.action_space.n
 env.observation_space.sample()
 
+# The structure of the program is inspired by:
 #https://towardsdatascience.com/q-learning-algorithm-from-explanation-to-implementation-cdbeda2ea187
+# But it is substansially different since the actions space is continous in this assignment
 
 N_CHUNKS = 100
 cart_pos = np.linspace(-4.8, 4.8, N_CHUNKS)
@@ -30,16 +33,18 @@ def continous_to_discrete(state, observation_space):
     
     return tuple(discrete)
 
-EXPLORATION_PROB = 1 # These variables must be optimized 
+EXPLORATION_PROB = 1 
 EXPLORATION_DECAY = 0.001
 MIN_EXPLORATION_PROB = 0.01
 #https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
 DISCOUNT_FACTOR = 0.99
-LEARNING_RATE = 0.125 # Try different values for this
+LEARNING_RATE = 0.125 
 
-N_EPISODES = 15000
-MAX_EPISODE_LEN = 500
+N_EPISODES = 10000
+MAX_EPISODE_LEN = 2000
 rewards_per_episode = []
+
+start = time.time()
 
 for e in range(N_EPISODES):
 
@@ -71,45 +76,38 @@ for e in range(N_EPISODES):
         
         total_reward += reward
 
-        # "Moving" the states
+        # "Moving" to the next state
         discrete_state = discrete_next_state
         state = next_state
 
         if done:
             break
 
-    EXPLORATION_PROB = max(MIN_EXPLORATION_PROB, np.exp(-EXPLORATION_DECAY*e)) # Number of episodes changes the decay
-    #exploration_prob = max(min_exploration_prob, exploration_decay*exploration_prob)
     rewards_per_episode.append(total_reward)
-    print(f" Episode {e} -- {int(100*e/N_EPISODES)}% finished", end="\r")
-
-meanhundred_rewards_per_episode = []
+    EXPLORATION_PROB = max(MIN_EXPLORATION_PROB, np.exp(-EXPLORATION_DECAY*e)) # Number of episodes changes the decay
+    print(f" Episode {e} -- {int(100*e/N_EPISODES)}% finished. Time taken {int(time.time() - start)} seconds", end="\r")
 
 # Iterate over each step in rewards_per_episode
-for i in range(len(rewards_per_episode)):
-    if i < 100:
-        meanhundred_rewards_per_episode.append(0)  # Append 0 for the first 100 steps
-    else:
-        # Calculate the mean of the previous 100 rewards
-        mean_reward = sum(rewards_per_episode[i-100:i]) / 100
-        meanhundred_rewards_per_episode.append(mean_reward)
-
+meanhundred_rewards_per_episode = [0 for x in range(100)] + [sum(rewards_per_episode[i:i+100])/100 for i in range(N_EPISODES - 100)]
 
 # Calculate the mean reward for every thousand steps
 for i in range(0, len(rewards_per_episode), 1000):
     print(f"Thousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}  ")
-
 
 plt.plot(rewards_per_episode)
 plt.plot(meanhundred_rewards_per_episode, label="Mean reward per hundred episodes")
 plt.xlabel("Episode")
 plt.ylabel("Duration (reward)")
 plt.legend()
-plt.show()
+plt.show(block=1)
 
 #https://stackoverflow.com/questions/24809757/how-to-make-a-histogram-from-a-list-of-data-and-plot-it-with-matplotlib
-counts, bins = np.histogram(rewards_per_episode, bins=500)
+trim_size = 0.05
+trim_ind = int(N_EPISODES*trim_size)
+trimmed_list = sorted(rewards_per_episode)[trim_ind:-trim_ind]
+counts, bins = np.histogram(trimmed_list, bins=int(N_EPISODES/100))
 plt.stairs(counts, bins, fill=True)
 plt.xlabel("Duration (reward)")
 plt.ylabel("Frequency of duration")
-plt.show()
+plt.title("Frequency of duration (trimmed result [0.05-0.95])")
+plt.show(block=1)

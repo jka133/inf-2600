@@ -104,6 +104,8 @@ if __name__=="__main__":
 else:
     from Assignement_2_task_2 import env as env
 
+import time
+
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -238,7 +240,8 @@ class DQN(nn.Module):
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, 128)
-        self.layer4 = nn.Linear(128, n_actions)
+        self.layer4 = nn.Linear(128, 128)
+        self.layer5 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
@@ -246,7 +249,8 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
-        return self.layer4(x)
+        x = F.relu(self.layer4(x))
+        return self.layer5(x)
 
 
 # ## Training
@@ -439,7 +443,9 @@ def optimize_model():
 if torch.cuda.is_available():
     num_episodes = 600
 else:
-    num_episodes = 200
+    num_episodes = 1000
+
+start = time.time()
 
 for i_episode in range(num_episodes):
     # Initialize the environment and get its state
@@ -477,7 +483,7 @@ for i_episode in range(num_episodes):
         if done:
             episode_durations.append(t + 1)
             #plot_durations()
-            print(f"\t{int(i_episode/num_episodes*100)+1}%",end="\r")
+            print(f"\t{int(i_episode/num_episodes*100)+1}%. Time taken {int(time.time() - start)} seconds",end="\r")
             break
 
 print('Complete')
@@ -485,7 +491,7 @@ print('Complete')
 #plt.ioff()
 mean_episode_durations = [0 for x in range(100)] + [sum(episode_durations[i:i+100])/100 for i in range(num_episodes - 100)]
 plt.plot(episode_durations,color="blue" if __name__=="__main__" else "green") # If task 2 (imported) the colour should be green
-plt.plot(mean_episode_durations,color="orange")
+plt.plot(mean_episode_durations,color="orange" if __name__=="__main__" else "red") # If task 2 (imported) the colour should be red
 plt.xlabel("Episode")
 plt.ylabel("Duration")
 plt.title("Result")
