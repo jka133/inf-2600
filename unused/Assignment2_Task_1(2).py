@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[102]:
+# In[1]:
 
 
 # For tips on running notebooks in Google Colab, see
@@ -53,13 +53,13 @@
 # Gym project and maintained by the same team since Gym v0.19.
 # If you are running this in Google Colab, run:
 
-# In[103]:
+# In[2]:
 
 
 #get_ipython().run_cell_magic('bash', '', '#pip3 install gymnasium[classic_control]\n')
 
 
-# In[104]:
+# In[3]:
 
 
 #### For Windows System:
@@ -73,14 +73,14 @@
 # -  automatic differentiation (``torch.autograd``)
 # 
 
-# In[105]:
+# In[4]:
 
 
 # !pip install torch==1.8.1
 # conda install pytorch==1.8.1 torchvision torchaudio -c pytorch
 
 
-# In[106]:
+# In[5]:
 
 
 import gymnasium as gym
@@ -88,7 +88,6 @@ import math
 import random
 import matplotlib
 import matplotlib.pyplot as plt
-
 from collections import namedtuple, deque
 from itertools import count
 
@@ -136,7 +135,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 
 # 
 
-# In[107]:
+# In[6]:
 
 
 Transition = namedtuple('Transition',
@@ -228,7 +227,7 @@ class ReplayMemory(object):
 # 
 # 
 
-# In[108]:
+# In[7]:
 
 
 class DQN(nn.Module):
@@ -237,16 +236,14 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, 128)
-        self.layer4 = nn.Linear(128, n_actions)
+        self.layer3 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        return self.layer4(x)
+        return self.layer3(x)
 
 
 # ## Training
@@ -270,7 +267,7 @@ class DQN(nn.Module):
 # 
 # 
 
-# In[109]:
+# In[8]:
 
 
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
@@ -367,7 +364,7 @@ def plot_durations(show_result=False):
 # 
 # 
 
-# In[110]:
+# In[9]:
 
 
 def optimize_model():
@@ -433,7 +430,7 @@ def optimize_model():
 # 
 # 
 
-# In[111]:
+# In[10]:
 
 
 if torch.cuda.is_available():
@@ -476,19 +473,12 @@ for i_episode in range(num_episodes):
 
         if done:
             episode_durations.append(t + 1)
-            #plot_durations()
-            print(f"\t{int(i_episode/num_episodes*100)+1}%",end="\r")
+            plot_durations()
             break
 
 print('Complete')
-#plot_durations(show_result=True)
-#plt.ioff()
-mean_episode_durations = [0 for x in range(100)] + [sum(episode_durations[i:i+100])/100 for i in range(num_episodes - 100)]
-plt.plot(episode_durations,color="blue")
-plt.plot(mean_episode_durations,color="orange")
-plt.xlabel("Episode")
-plt.ylabel("Duration")
-plt.title("Result")
+plot_durations(show_result=True)
+plt.ioff()
 plt.show()
 
 
