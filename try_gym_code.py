@@ -2,7 +2,7 @@ import numpy as np
 import time
 import gym
 import matplotlib.pyplot as plt
-import math
+
 env = gym.make("CartPole-v1")
 N_ACTIONS = env.action_space.n
 env.observation_space.sample()
@@ -48,7 +48,7 @@ start = time.time()
 
 for e in range(N_EPISODES):
 
-    state, unused_dict = env.reset()
+    state, unused_dict = env.reset() # The version of gym used provides an empty dictionary along with the state
     discrete_state = continous_to_discrete(state, observation_space)
     done = False
 
@@ -85,19 +85,21 @@ for e in range(N_EPISODES):
 
     rewards_per_episode.append(total_reward)
     EXPLORATION_PROB = max(MIN_EXPLORATION_PROB, np.exp(-EXPLORATION_DECAY*e)) # Number of episodes changes the decay
-    print(f" Episode {e} -- {int(100*e/N_EPISODES)}% finished. Time taken {int(time.time() - start)} seconds", end="\r")
+    print(f"\tEpisode {e+1} -- {int(100*e/N_EPISODES)+1}% finished. Time taken {int(time.time() - start)} seconds", end="\r")
+print()
 
 # Iterate over each step in rewards_per_episode
 meanhundred_rewards_per_episode = [0 for x in range(100)] + [sum(rewards_per_episode[i:i+100])/100 for i in range(N_EPISODES - 100)]
 
 # Calculate the mean reward for every thousand steps
 for i in range(0, len(rewards_per_episode), 1000):
-    print(f"Thousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}  ")
+    print(f"\tThousand mean step {int(i/1000+1)}: {sum(rewards_per_episode[i:i+1000]) / 1000}  ")
 
 plt.plot(rewards_per_episode)
 plt.plot(meanhundred_rewards_per_episode, label="Mean reward per hundred episodes")
 plt.xlabel("Episode")
 plt.ylabel("Duration (reward)")
+plt.title("QL")
 plt.legend()
 plt.show(block=1)
 
@@ -109,5 +111,5 @@ counts, bins = np.histogram(trimmed_list, bins=int(N_EPISODES/100))
 plt.stairs(counts, bins, fill=True)
 plt.xlabel("Duration (reward)")
 plt.ylabel("Frequency of duration")
-plt.title("Frequency of duration (trimmed result [0.05-0.95])")
+plt.title("Frequency of duration (trimmed result [0.05-0.95]) QL")
 plt.show(block=1)

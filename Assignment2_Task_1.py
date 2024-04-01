@@ -104,7 +104,7 @@ if __name__=="__main__":
 else:
     from Assignement_2_task_2 import env as env
 
-import time
+import time # To trace runtime
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -239,18 +239,14 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, 128)
-        self.layer4 = nn.Linear(128, 128)
-        self.layer5 = nn.Linear(128, n_actions)
+        self.layer3 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        x = F.relu(self.layer4(x))
-        return self.layer5(x)
+        return self.layer3(x)
 
 
 # ## Training
