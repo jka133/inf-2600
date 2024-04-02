@@ -486,8 +486,8 @@ print('Complete')
 #plot_durations(show_result=True)
 #plt.ioff()
 mean_episode_durations = [0 for x in range(100)] + [sum(episode_durations[i:i+100])/100 for i in range(num_episodes - 100)]
-plt.plot(episode_durations,color="blue" if __name__=="__main__" else "green") # If task 2 (imported) the colour should be green
-plt.plot(mean_episode_durations,color="orange" if __name__=="__main__" else "red") # If task 2 (imported) the colour should be red
+plt.plot(episode_durations,color="blue" if __name__=="__main__" else "green") # If task 2 (imported) the color should be green
+plt.plot(mean_episode_durations,color="orange" if __name__=="__main__" else "red") # If task 2 (imported) the color should be red
 plt.xlabel("Episode")
 plt.ylabel("Duration")
 plt.title("Result")

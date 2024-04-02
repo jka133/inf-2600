@@ -28,17 +28,18 @@ def continous_to_discrete(state, observation_space):
 
     for value, space_chunk in zip(state, observation_space):
         # using np.digitize to find in which chunk of cart_pos or pole_ang the value belongs to
+        # https://www.geeksforgeeks.org/python-numpy-np-digitize-method/
         ind = np.digitize(value, space_chunk)
-        discrete += [ind - 1] # append the chunk indices of the state
-    
+        discrete += [ind - 1] # append the chunk index of the state
+
     return tuple(discrete)
 
-EXPLORATION_PROB = 1 
+EXPLORATION_PROB = 1
 EXPLORATION_DECAY = 0.001
 MIN_EXPLORATION_PROB = 0.01
 #https://stats.stackexchange.com/questions/221402/understanding-the-role-of-the-discount-factor-in-reinforcement-learning
 DISCOUNT_FACTOR = 0.99
-LEARNING_RATE = 0.125 
+LEARNING_RATE = 0.125
 
 N_EPISODES = 15000
 MAX_EPISODE_LEN = 2000
@@ -51,7 +52,6 @@ for e in range(N_EPISODES):
     state, unused_dict = env.reset() # The version of gym used provides an empty dictionary along with the state
     discrete_state = continous_to_discrete(state, observation_space)
     done = False
-
     total_reward = 0
 
     for _ in range(MAX_EPISODE_LEN):
@@ -73,7 +73,7 @@ for e in range(N_EPISODES):
         #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
         new_q_value = (1 - LEARNING_RATE) * old_q_value + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_q_value)
         q_table[discrete_state + (action, )] = new_q_value
-        
+
         total_reward += reward
 
         # "Moving" to the next state
@@ -113,3 +113,5 @@ plt.xlabel("Duration (reward)")
 plt.ylabel("Frequency of duration")
 plt.title("Frequency of duration (trimmed result [0.05-0.95]) QL")
 plt.show(block=1)
+
+

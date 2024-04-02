@@ -28,6 +28,7 @@ def continous_to_discrete(state, observation_space):
 
     for value, space_chunk in zip(state, observation_space):
         # using np.digitize to find in which chunk of cart_pos or pole_ang the value belongs to
+        # https://www.geeksforgeeks.org/python-numpy-np-digitize-method/
         ind = np.digitize(value, space_chunk)
         discrete += [ind - 1] # append the chunk index of the state
 
@@ -72,7 +73,7 @@ for e in range(N_EPISODES):
 
         old_q_value = q_table[discrete_state + (action, )]
         # The next_q_value is different from Qlearning
-        #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
+        # https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
         # Instead of taking the action with ighest q-value the next action is also on policy
         next_q_value = q_table[discrete_next_state + (next_action, )]
 
