@@ -112,5 +112,3 @@ plt.xlabel("Duration (reward)")
 plt.ylabel("Frequency of duration")
 plt.title("Frequency of duration (trimmed result [0.05-0.95]) QL")
 plt.show(block=1)
-
-
