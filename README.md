@@ -7,7 +7,7 @@ $ jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb
 
 When running Task 2 is import the script from Task 1 and run the training trough the code from Task 1 script. This is done by checking whetether the script is imported or not. If imported (running Task 2) the appropriate environment is loaded, and the same goes when running Task 1.
 
-I decided to exclude the continous printing of progress due to it slowing down the script. This can be undone by removing the comments for calls to plot_durations()
+I decided to exclude the continous printing of progress due to it slowing down the script. This can be undone by removing the comments for calls to plot_durations(). I have also set the number of episodes to be 200 for task 1 and 2.
 
 Task 2:
 
