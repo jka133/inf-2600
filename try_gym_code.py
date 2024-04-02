@@ -65,7 +65,6 @@ for e in range(N_EPISODES):
         discrete_next_state = continous_to_discrete(next_state, observation_space)
 
         old_q_value = q_table[discrete_state + (action, )]
-        #https://www.geeksforgeeks.org/sarsa-reinforcement-learning/
         # This part is not on policy as it only regards the highest q-value
         next_q_value = np.max(q_table[discrete_next_state])
 
