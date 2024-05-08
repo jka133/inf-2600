@@ -49,43 +49,104 @@ num_stdv = 1
 
 # Define the labels dictionary
 labels = {
-
-}
+    'precipitation': ['low', 'mid', 'high'], 
+    'temp_max': ['low', 'mid', 'high'], 
+    'temp_min': ['low', 'mid', 'high'], 
+    'wind': ['low', 'mid', 'high'], 
+    'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']
+} 
 
 # Create bounds for continuous labels
+prec_mean = df0['precipitation'].mean() # I made the decision to make percipitation threefold
+prec_stdv = df0['precipitation'].std()
 
+temp_max_mean = df0['temp_max'].mean()
+temp_max_stdv = df0['temp_max'].std()
 
-df.head()
+temp_min_mean = df0['temp_min'].mean()
+temp_min_stdv = df0['temp_min'].std()
+
+wind_mean = df0['wind'].mean()
+wind_stdv = df0['wind'].std()
+
+bounds = {
+    'precipitation': [prec_mean - num_stdv * prec_stdv, prec_mean, prec_mean + num_stdv * prec_stdv],
+    'temp_max': [temp_max_mean - num_stdv * temp_max_stdv, temp_max_mean, temp_max_mean + num_stdv * temp_max_stdv],
+    'temp_min': [temp_min_mean - num_stdv * temp_min_stdv, temp_min_mean, temp_min_mean + num_stdv * temp_min_stdv],
+    'wind': [wind_mean - num_stdv * wind_stdv, wind_mean, wind_mean + num_stdv * wind_stdv]
+}
+
+# Change values in columns temp_max, temp_min and wind according to the boundaries. The change should be according to the labels.
+def label_data(row, column, bounds, labels):
+    if row[column] < bounds[column][0]:
+        return labels[column][0]
+    elif row[column] < bounds[column][1]:
+        return labels[column][1]
+    else:
+        return labels[column][2]
+
+# Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
+df['precipitation'] = df.apply(label_data, args=('precipitation', bounds, labels), axis=1)
+df['temp_max'] = df.apply(label_data, args=('temp_max', bounds, labels), axis=1)
+df['temp_min'] = df.apply(label_data, args=('temp_min', bounds, labels), axis=1)
+df['wind'] = df.apply(label_data, args=('wind', bounds, labels), axis=1)
+
+print(df)
 
 # Define the hierarchy
 weather_model = BayesianNetwork([
-    (categorical_lst), 
-    (continuous_lst), 
-    (new_cols)
+    ('weather', 'precipitation'),
+    ('precipitation', 'temp_max'),
+    ('weather', 'wind'),
+    ('wind', 'temp_min')
 ])
+print('All good')
 
 # And, the states for each variables
+states = {
+    'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog'],
+    'precipitation': ['low', 'mid', 'high'],
+    'temp_max': ['low', 'mid', 'high'],
+    'temp_min': ['low', 'mid', 'high'],
+    'wind': ['low', 'mid', 'high']
+}
 
 # Calculate Probabilities
 
+""" Start of code from TA """
 # Weather does not have any parents so all we need are the marginal probabilities of observing each weather type
+weather_marginal = (df['weather'].value_counts()/len(df['weather'])).round(3)
+weather_marginal = np.array([[value] for value in weather_marginal])
+
 
 # Joint Propabilities
 # Create dict where key=parent, value=child
-var_dict = {
+var_dict = {'weather': ['precipitation', 'wind'],
+           'precipitation': ['temp_max'],
+           'wind': ['temp_min'],
+           }
 
-            }
 
 # Create conditional distributions and store results in a list
 cpd_lst = []
 for key, value in var_dict.items():
-    pass
-    ### Define yourself
-
-# Note that we get 3 Nan values in the above conditional distributions. This is because one of the type of precipitation (low) did not contain any relation with temp_max.
+   length = len(value)
+   for i in range(length):
+       value_given_key = df.groupby(key)[value[i]].value_counts(
+                                                   normalize=True
+                                                   ).sort_index()
+       cpd = value_given_key.unstack(fill_value=0).to_numpy().T
+       cpd_lst.append(cpd)
+""" End code from TA """
+# Note that we get 3 Nan vslues in the above conditional distributions. This is because one of the type of precipitation (low) did not contain any relation with temp_max.
 # Therefore, normalization, does not produce the intended result.
 # To mitigate this, we replace Nan with the equal probability within the three values, i.e., 0.33
 cpd_lst[2][:,0] = .33
+print(cpd_lst)
+exit()
+
+# https://pgmpy.org/models/bayesiannetwork.html
+# Zoom out and use meny bar to find Exact Inference and Approximate Inference for the next tasks
 
 cpd_lst
 
