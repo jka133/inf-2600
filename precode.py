@@ -204,6 +204,7 @@ weather_model.add_cpds(weather_cpd, precipitation_cpd, wind_cpd, temp_max_cpd, t
 print(weather_model)
 
 # Check if model is consistent
+print("My weather model is valid:")
 print(weather_model.check_model())
 
 # Viewing nodes of the model
@@ -218,8 +219,6 @@ print(weather_cpd)
 # Print the probability table of the wind node
 print(wind_cpd)
 
-exit()
-
 # Independcies in the model
 
 # Checking independcies of a particular node
@@ -227,15 +226,38 @@ exit()
 
 from pgmpy.inference import VariableElimination
 
-# Question 1: (a) What is the probability of high wind when the weather is sunny? (b) What is the probability of sunny weather when the wind is high?
+# Question 1: 
+# https://pgmpy.org/exact_infer/ve.html using the query feature
+#(a) What is the probability of high wind when the weather is sunny? 
+var_elim = VariableElimination(weather_model)
+phi_query_a = var_elim.query(variables=['wind'], evidence={'weather': 'sun'})
+print("\nProbability of wind when the weather is sunny:")
+print(phi_query_a)
 
+#(b) What is the probability of sunny weather when the wind is high?
+phi_query_b = var_elim.query(variables=['weather'], evidence={'wind': 'high'})
+print("\nProbability of weather when the wind is high:")
+print(phi_query_b)
 
 # Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 
+joint_probability_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+
+#Joint_probability is a huge table oof all the joint probabilities in the network
+
+max_probability = np.max(joint_probability_a.values)
+max_index = np.argmax(joint_probability_a.values)
+print(joint_probability_a)
+print(max_probability, max_index)
+# Find a way to retrieve this, the max index and probability is found, but cannot retrieve it
+# Need the best joint probability, to explain it.....
+
 # (b) What is the most probable condition for precipitation, wind and weather, combined?
 
+joint_probability_b = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
 
+exit()
 # Question 3. Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
 
