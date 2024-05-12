@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from pgmpy.models import BayesianNetwork
 from pgmpy.factors.discrete.CPD import TabularCPD
+from pgmpy.estimators import MaximumLikelihoodEstimator
 
 # Import data, make a copy of the original
 df0 = pd.read_csv('seattle-weather.csv')
@@ -312,8 +313,6 @@ print(f'Prior probabilities for low and mid wind: \n{low_wind_prior, mid_wind_pr
 
 # Use prior and max_probability_4 (1&2) and max_index_4 (1&2) to make the probability
 
-
-
 print("\n--- Question 1 ---\n")
 
 from pgmpy.factors.discrete import State
@@ -333,27 +332,101 @@ print(h_wind_given_sun)
 
 # Repeat Q.1. (b) of Task 1.2 - What is the probability of sunny weather when the wind is high?
 
-sample_b = app_inference.rejection_sample(evidence=[State('wind', 'high')], size=sample_size)
+sample_b = app_inference.likelihood_weighted_sample(evidence=[State('wind','high')], size=sample_size)
+
 sun_sample = sample_b[sample_b['weather'] == 'sun']
 print('probability of sun given high wind')
 sun_given_h_wind = len(sun_sample)/sample_size
 print(sun_given_h_wind)
 
+print("\n--- Question 2 ---\n")
+
 # Repeat Q.2 . (a) of Task 1.2 - Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 
+full_sample = app_inference.forward_sample(size=sample_size)
+occurences_A = full_sample.groupby(['weather', 'wind', 'precipitation', 'temp_max', 'temp_min']).size()
+joint_probabilities_a = occurences_A.div(sample_size)
 
+# Find the most probable condition
+most_probable_condition_a = joint_probabilities_a.idxmax()
+most_probable_probability_a = joint_probabilities_a.max()
+
+print("\nMost Probable Condition and its Probability:")
+print(most_probable_condition_a, most_probable_probability_a)
 
 # Repeat Q.2 . (b) of Task 1.2 - What is the most probable condition for precipitation, wind and weather, combined?
 
+occurences_b = full_sample.groupby(['weather', 'wind', 'precipitation']).size()
+joint_probabilities_b = occurences_b.div(sample_size)
 
-exit()
+# Find the most probable condition
+most_probable_condition_b = joint_probabilities_b.idxmax()
+most_probable_probability_b = joint_probabilities_b.max()
 
+print("\nMost Probable Condition and its Probability:")
+print(most_probable_condition_b, most_probable_probability_b)
+
+print("\n--- Question 3 ---\n")
 from pgmpy.inference import ApproxInference
-
 # Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
+inf = ApproxInference(weather_model)
+prob_weather_mid_p = inf.query(variables = ['weather'], n_samples=sample_size, evidence={'precipitation': 'mid'})
+print(prob_weather_mid_p)
+
+print("\n--- Question 4 ---\n")
+# Repeat Q.4 of Task 1.2 - What is the probability of each weather condition given that precipitation is medium and wind is low or medium?
+# Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
+
+l_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'low')], size=sample_size)
+prob_l = l_wind_sample['weather'].value_counts(normalize=True)
+print(prob_l)
+
+m_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'mid')], size=sample_size)
+prob_m = m_wind_sample['weather'].value_counts(normalize=True)
+print(prob_m)
+
+# Use the prior probabilities:
+low_wind_prior, mid_wind_prior
+# Do the math in report
+
+""" New models: """
+
+weather_model2 = BayesianNetwork([
+    ('weather', 'precipitation'),
+    ('weather', 'wind'),
+    ('precipitation', 'temp_max'),
+    ('precipitation', 'temp_min'),
+    ('wind', 'temp_min'),
+    ('wind', 'temp_max')]
+)
+weather_model3 = BayesianNetwork([
+    ('weather', 'wind'),
+    ('wind', 'precipitation'),
+    ('precipitation', 'temp_max'),
+    ('precipitation', 'temp_min')]
+)
+
+weather_model2.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states) # Tip from Benjamin Danielsen
+weather_model3.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states)
+
+var_elim2 = VariableElimination(weather_model2)
+var_elim3 = VariableElimination(weather_model3)
+
+joint_probability_2 = var_elim2.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+joint_probability_3 = var_elim3.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+
+max_probability_2 = np.max(joint_probability_2.values)
+max_index_2 = np.argmax(joint_probability_2.values)
+#print(joint_probability_2)
+print(max_probability_2, max_index_2)
+
+max_probability_3 = np.max(joint_probability_3.values)
+max_index_3 = np.argmax(joint_probability_3.values)
+#print(joint_probability_3)
+print(max_probability_3, max_index_3)
 
 
-# Repeat Q.4 of Task 1.2 - What is the probability of each weather condition given that precipitation is medium and wind is low or medium? Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
 
-
+# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html
+# The ground work of chosing paramteres (nodes) for the Bayesian Network
