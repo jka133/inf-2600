@@ -57,23 +57,23 @@ labels = {
 } 
 
 # Create bounds for continuous labels
-prec_mean = df0['precipitation'].mean()
-prec_stdv = df0['precipitation'].std()
+p_mean = df0['precipitation'].mean()
+p_stdv = df0['precipitation'].std()
 
-temp_max_mean = df0['temp_max'].mean()
-temp_max_stdv = df0['temp_max'].std()
+t_max_mean = df0['temp_max'].mean()
+t_max_stdv = df0['temp_max'].std()
 
-temp_min_mean = df0['temp_min'].mean()
-temp_min_stdv = df0['temp_min'].std()
+t_min_mean = df0['temp_min'].mean()
+t_min_stdv = df0['temp_min'].std()
 
-wind_mean = df0['wind'].mean()
-wind_stdv = df0['wind'].std()
+w_mean = df0['wind'].mean()
+w_stdv = df0['wind'].std()
 
 bounds = {
-    'precipitation': [prec_mean - num_stdv * prec_stdv, prec_mean, prec_mean + num_stdv * prec_stdv],
-    'temp_max': [temp_max_mean - num_stdv * temp_max_stdv, temp_max_mean, temp_max_mean + num_stdv * temp_max_stdv],
-    'temp_min': [temp_min_mean - num_stdv * temp_min_stdv, temp_min_mean, temp_min_mean + num_stdv * temp_min_stdv],
-    'wind': [wind_mean - num_stdv * wind_stdv, wind_mean, wind_mean + num_stdv * wind_stdv]
+    'precipitation': [p_mean - num_stdv * p_stdv, p_mean, p_mean + num_stdv * p_stdv],
+    'temp_max': [t_max_mean - num_stdv * t_max_stdv, t_max_mean, t_max_mean + num_stdv * t_max_stdv],
+    'temp_min': [t_min_mean - num_stdv * t_min_stdv, t_min_mean, t_min_mean + num_stdv * t_min_stdv],
+    'wind': [w_mean - num_stdv * w_stdv, w_mean, w_mean + num_stdv * w_stdv]
 }
 
 # Change values in columns temp_max, temp_min and wind according to the boundaries. The change should be according to the labels.
@@ -226,6 +226,7 @@ print(wind_cpd)
 
 from pgmpy.inference import VariableElimination
 
+print("\n--- Question 1 ---\n")
 # Question 1: 
 # https://pgmpy.org/exact_infer/ve.html using the query feature
 #(a) What is the probability of high wind when the weather is sunny? 
@@ -239,6 +240,8 @@ phi_query_b = var_elim.query(variables=['weather'], evidence={'wind': 'high'})
 print("\nProbability of weather when the wind is high:")
 print(phi_query_b)
 
+
+print("\n--- Question 2 ---\n")
 # Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 
@@ -246,25 +249,46 @@ joint_probability_a = var_elim.query(variables=['weather', 'precipitation', 'tem
 
 #Joint_probability is a huge table oof all the joint probabilities in the network
 
-max_probability = np.max(joint_probability_a.values)
-max_index = np.argmax(joint_probability_a.values)
+max_probability_a = np.max(joint_probability_a.values)
+max_index_a = np.argmax(joint_probability_a.values)
 print(joint_probability_a)
-print(max_probability, max_index)
+print(max_probability_a, max_index_a)
 # Find a way to retrieve this, the max index and probability is found, but cannot retrieve it
 # Need the best joint probability, to explain it.....
 
 # (b) What is the most probable condition for precipitation, wind and weather, combined?
 
-joint_probability_b = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+joint_probability_b = var_elim.query(variables=['weather', 'precipitation', 'wind'])
+max_probability_b = np.max(joint_probability_b.values)
+max_index_b = np.argmax(joint_probability_b.values)
+print(joint_probability_b)
+print(max_probability_b, max_index_b)
+# Find the variant of weather, precip and wind; weather(drizzle) | precipitation(mid)  | wind(mid)
 
-exit()
+
+print("\n--- Question 3 ---\n")
 # Question 3. Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
+joint_probability_3 = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid'})
+max_probability_3 = np.max(joint_probability_3.values)
+max_index_3 = np.argmax(joint_probability_3.values)
+print(joint_probability_3)
+print(max_probability_3, max_index_3)
+# Search for it in the table
 
+print("\n--- Question 4 ---\n")
 
-# Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
+# Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
+#Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
 
+joint_probability_4_high_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'high'})
 
+min_probability_4 = np.min(joint_probability_4_high_wind.values)
+min_index_4 = np.argmin(joint_probability_4_high_wind.values)
+print(joint_probability_4_high_wind)
+print(min_probability_4, min_index_4)
+
+exit()
 
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
