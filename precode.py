@@ -149,6 +149,9 @@ for key, value in var_dict.items():
         cpd = grouped.unstack(fill_value=0).reindex(columns=states[child], index=states[key], fill_value=0).to_numpy().T
         cpd_lst.append(cpd)
 # Print the shapes of the four CPDs
+
+# The loop above is from TA, but fixed but ChatGPT
+
 """ for cpd_array in cpd_lst:
     print(cpd_array.shape) """
 
@@ -281,12 +284,25 @@ print("\n--- Question 4 ---\n")
 # Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
 #Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
 
-joint_probability_4_high_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'high'})
+joint_probability_4_low_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'low'})
 
-min_probability_4 = np.min(joint_probability_4_high_wind.values)
-min_index_4 = np.argmin(joint_probability_4_high_wind.values)
-print(joint_probability_4_high_wind)
-print(min_probability_4, min_index_4)
+max_probability_4 = np.max(joint_probability_4_low_wind.values)
+max_index_4 = np.argmax(joint_probability_4_low_wind.values)
+print(joint_probability_4_low_wind)
+print(max_probability_4, max_index_4)
+
+joint_probability_4_mid_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'mid'})
+
+max_probability_4 = np.max(joint_probability_4_mid_wind.values)
+max_index_4 = np.argmax(joint_probability_4_mid_wind.values)
+print(joint_probability_4_mid_wind)
+print(max_probability_4, max_index_4)
+
+wind_marginal = (df['wind'].value_counts().reindex(['low', 'mid', 'high'])/len(df['wind'])).round(3)
+wind_marginal = np.array([[value] for value in wind_marginal])
+low_wind_prior = wind_marginal[0][0]
+mid_wind_prior = wind_marginal[1][0]
+print(f'Prior probabilities for low and mid wind: \n{low_wind_prior, mid_wind_prior}')
 
 exit()
 
