@@ -84,7 +84,6 @@ def label_data(row, column, bounds, labels):
     if row[column] > bounds[column][2]:
         return labels[column][2]
     return labels[column][1]
-    
 
 # Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
 df['precipitation'] = df.apply(label_data, args=('precipitation', bounds, labels), axis=1)
@@ -94,7 +93,6 @@ df['wind'] = df.apply(label_data, args=('wind', bounds, labels), axis=1)
 
 print(df.describe())
 print(df)
-
 
 # Define the hierarchy
 weather_model = BayesianNetwork([
@@ -114,7 +112,6 @@ states = {
 }
 
 # Calculate Probabilities
-
 """ Start of code from TA """
 # Weather does not have any parents so all we need are the marginal probabilities of observing each weather type
 #weather_marginal = (df['weather'].value_counts()/len(df['weather'])).round(3)
@@ -123,14 +120,12 @@ weather_marginal = (df['weather'].value_counts().reindex(['drizzle', 'rain', 'su
 weather_marginal = np.array([[value] for value in weather_marginal])
 print(weather_marginal) # Seems right with the info from assignment
 
-
 # Joint Propabilities
 # Create dict where key=parent, value=child
 var_dict = {'weather': ['precipitation', 'wind'],
            'precipitation': ['temp_max'],
            'wind': ['temp_min'],
            }
-
 
 """ # Create conditional distributions and store results in a list
 cpd_lst = []
@@ -142,7 +137,6 @@ for key, value in var_dict.items():
        cpd_lst.append(cpd)   """
 """ End code from TA """
 
-
 """ Code from TA gave the wrong shapes of the CPDs """
 # Create conditional distributions and store results in a list
 cpd_lst = []
@@ -153,31 +147,20 @@ for key, value in var_dict.items():
         # Unstack and reindex with all possible states to ensure complete shape
         cpd = grouped.unstack(fill_value=0).reindex(columns=states[child], index=states[key], fill_value=0).to_numpy().T
         cpd_lst.append(cpd)
-# Print the shapes of the four CPDs
-
 # The loop above is from TA, but fixed but ChatGPT
-
-""" for cpd_array in cpd_lst:
-    print(cpd_array.shape) """
 
 # Note that we get 3 Nan vslues in the above conditional distributions. This is because one of the type of precipitation (low) did not contain any relation with temp_max.
 # Therefore, normalization, does not produce the intended result.
 # To mitigate this, we replace Nan with the equal probability within the three values, i.e., 0.33
-
 cpd_lst[2][:,0] = .33
 print(cpd_lst)
-# Print the shapes of the four CPDs
-""" for cpd_array in cpd_lst:
-    print(cpd_array) """
+
 
 # https://pgmpy.org/models/bayesiannetwork.html
 # Zoom out and use meny bar to find Exact Inference and Approximate Inference for the next tasks
 
-#cpd_lst
-
 # Creating tabular conditional probability distribution
 
-# CPD for precipitation given weather
 weather_cpd = TabularCPD(variable='weather', variable_card=5,
                          values=weather_marginal, # has no evidence
                          state_names={'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']})
@@ -207,7 +190,6 @@ temp_min_cpd = TabularCPD(variable='temp_min', variable_card=3,
                                     'wind': ['low', 'mid', 'high']})
 
 # Add CPDs and factors to the model
-
 weather_model.add_cpds(weather_cpd, precipitation_cpd, wind_cpd, temp_max_cpd, temp_min_cpd)
 print(weather_model)
 
@@ -228,7 +210,6 @@ print(weather_cpd)
 print(wind_cpd)
 
 # Independcies in the model
-
 # Checking independcies of a particular node
 print(f"Independencies in precipitation node: {weather_model.local_independencies('precipitation')}")
 print(f"Independencies in temp_max node: {weather_model.local_independencies('temp_max')}")
@@ -237,7 +218,7 @@ print(f"Independencies in temp_min node: {weather_model.local_independencies('te
 
 from pgmpy.inference import VariableElimination
 
-print("\n--- Question 1 ---\n")
+print("\n--- Question 1.2.1 ---\n")
 # Question 1: 
 # https://pgmpy.org/exact_infer/ve.html using the query feature
 #(a) What is the probability of high wind when the weather is sunny? 
@@ -251,12 +232,11 @@ phi_query_b = var_elim.query(variables=['weather'], evidence={'wind': 'high'})
 print("\nProbability of weather when the wind is high:")
 print(phi_query_b)
 
-print("\n--- Question 2 ---\n")
+print("\n--- Question 1.2.2 ---\n")
 # Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 
 joint_probability_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
-
 #Joint_probability is a huge table oof all the joint probabilities in the network
 
 max_probability_a = np.max(joint_probability_a.values)
@@ -276,7 +256,7 @@ print(max_probability_b, max_index_b)
 # Find the variant of weather, precip and wind; weather(drizzle) | precipitation(mid)  | wind(mid)
 
 
-print("\n--- Question 3 ---\n")
+print("\n--- Question 1.2.3 ---\n")
 # Question 3. Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
 joint_probability_3 = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid'})
@@ -286,8 +266,7 @@ print(joint_probability_3)
 print(max_probability_3, max_index_3)
 # Search for it in the table
 
-print("\n--- Question 4 ---\n")
-
+print("\n--- Question 1.2.4 ---\n")
 # Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
 #Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
 
@@ -313,13 +292,11 @@ print(f'Prior probabilities for low and mid wind: \n{low_wind_prior, mid_wind_pr
 
 # Use prior and max_probability_4 (1&2) and max_index_4 (1&2) to make the probability
 
-print("\n--- Question 1 ---\n")
-
+print("\n--- Question 1.3.1 ---\n")
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
 
 sample_size = 100000
-
 # Repeat Q.1. (a) of Task 1.2 - What is the probability of high wind when the weather is sunny?
 
 app_inference = BayesianModelSampling(weather_model)
@@ -339,10 +316,9 @@ print('probability of sun given high wind')
 sun_given_h_wind = len(sun_sample)/sample_size
 print(sun_given_h_wind)
 
-print("\n--- Question 2 ---\n")
+print("\n--- Question 1.3.2 ---\n")
 
 # Repeat Q.2 . (a) of Task 1.2 - Calculate all the possible joint probability and determine the best probable condition. Explain your results?
-
 full_sample = app_inference.forward_sample(size=sample_size)
 occurences_A = full_sample.groupby(['weather', 'wind', 'precipitation', 'temp_max', 'temp_min']).size()
 joint_probabilities_a = occurences_A.div(sample_size)
@@ -366,7 +342,7 @@ most_probable_probability_b = joint_probabilities_b.max()
 print("\nMost Probable Condition and its Probability:")
 print(most_probable_condition_b, most_probable_probability_b)
 
-print("\n--- Question 3 ---\n")
+print("\n--- Question 1.3.3 ---\n")
 from pgmpy.inference import ApproxInference
 # Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
@@ -374,10 +350,9 @@ inf = ApproxInference(weather_model)
 prob_weather_mid_p = inf.query(variables = ['weather'], n_samples=sample_size, evidence={'precipitation': 'mid'})
 print(prob_weather_mid_p)
 
-print("\n--- Question 4 ---\n")
+print("\n--- Question 1.3.4 ---\n")
 # Repeat Q.4 of Task 1.2 - What is the probability of each weather condition given that precipitation is medium and wind is low or medium?
 # Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
-
 l_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'low')], size=sample_size)
 prob_l = l_wind_sample['weather'].value_counts(normalize=True)
 print(prob_l)
@@ -390,8 +365,8 @@ print(prob_m)
 low_wind_prior, mid_wind_prior
 # Do the math in report
 
+print("\n--- Task 1.4 ---\n")
 """ New models: """
-
 weather_model2 = BayesianNetwork([
     ('weather', 'precipitation'),
     ('weather', 'wind'),
@@ -425,8 +400,3 @@ max_probability_3 = np.max(joint_probability_3.values)
 max_index_3 = np.argmax(joint_probability_3.values)
 #print(joint_probability_3)
 print(max_probability_3, max_index_3)
-
-
-
-# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html
-# The ground work of chosing paramteres (nodes) for the Bayesian Network
