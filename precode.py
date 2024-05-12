@@ -57,17 +57,17 @@ labels = {
 } 
 
 # Create bounds for continuous labels
-p_mean = df0['precipitation'].mean()
-p_stdv = df0['precipitation'].std()
+p_mean = df['precipitation'].mean()
+p_stdv = df['precipitation'].std()
 
-t_max_mean = df0['temp_max'].mean()
-t_max_stdv = df0['temp_max'].std()
+t_max_mean = df['temp_max'].mean()
+t_max_stdv = df['temp_max'].std()
 
-t_min_mean = df0['temp_min'].mean()
-t_min_stdv = df0['temp_min'].std()
+t_min_mean = df['temp_min'].mean()
+t_min_stdv = df['temp_min'].std()
 
-w_mean = df0['wind'].mean()
-w_stdv = df0['wind'].std()
+w_mean = df['wind'].mean()
+w_stdv = df['wind'].std()
 
 bounds = {
     'precipitation': [p_mean - num_stdv * p_stdv, p_mean, p_mean + num_stdv * p_stdv],
@@ -80,10 +80,10 @@ bounds = {
 def label_data(row, column, bounds, labels):
     if row[column] < bounds[column][0]:
         return labels[column][0]
-    elif row[column] < bounds[column][1]:
-        return labels[column][1]
-    else:
+    if row[column] > bounds[column][2]:
         return labels[column][2]
+    return labels[column][1]
+    
 
 # Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
 df['precipitation'] = df.apply(label_data, args=('precipitation', bounds, labels), axis=1)
@@ -91,7 +91,9 @@ df['temp_max'] = df.apply(label_data, args=('temp_max', bounds, labels), axis=1)
 df['temp_min'] = df.apply(label_data, args=('temp_min', bounds, labels), axis=1)
 df['wind'] = df.apply(label_data, args=('wind', bounds, labels), axis=1)
 
+print(df.describe())
 print(df)
+
 
 # Define the hierarchy
 weather_model = BayesianNetwork([
@@ -114,7 +116,9 @@ states = {
 
 """ Start of code from TA """
 # Weather does not have any parents so all we need are the marginal probabilities of observing each weather type
-weather_marginal = (df['weather'].value_counts()/len(df['weather'])).round(3)
+#weather_marginal = (df['weather'].value_counts()/len(df['weather'])).round(3)
+weather_marginal = (df['weather'].value_counts().reindex(['drizzle', 'rain', 'sun', 'snow', 'fog'])/len(df['weather'])).round(3)
+# Is this not better?
 weather_marginal = np.array([[value] for value in weather_marginal])
 print(weather_marginal) # Seems right with the info from assignment
 
@@ -196,7 +200,7 @@ wind_cpd = TabularCPD(variable='wind', variable_card=3,
                                     'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']})
 
 temp_min_cpd = TabularCPD(variable='temp_min', variable_card=3,
-                      values=cpd_lst[2],
+                      values=cpd_lst[3],
                       evidence=['wind'], evidence_card=[3],
                       state_names={'temp_min': ['low', 'mid', 'high'],
                                     'wind': ['low', 'mid', 'high']})
@@ -225,7 +229,10 @@ print(wind_cpd)
 # Independcies in the model
 
 # Checking independcies of a particular node
-
+print(f"Independencies in precipitation node: {weather_model.local_independencies('precipitation')}")
+print(f"Independencies in temp_max node: {weather_model.local_independencies('temp_max')}")
+print(f"Independencies in wind node: {weather_model.local_independencies('wind')}")
+print(f"Independencies in temp_min node: {weather_model.local_independencies('temp_min')}")
 
 from pgmpy.inference import VariableElimination
 
@@ -242,7 +249,6 @@ print(phi_query_a)
 phi_query_b = var_elim.query(variables=['weather'], evidence={'wind': 'high'})
 print("\nProbability of weather when the wind is high:")
 print(phi_query_b)
-
 
 print("\n--- Question 2 ---\n")
 # Question 2:
@@ -286,17 +292,17 @@ print("\n--- Question 4 ---\n")
 
 joint_probability_4_low_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'low'})
 
-max_probability_4 = np.max(joint_probability_4_low_wind.values)
-max_index_4 = np.argmax(joint_probability_4_low_wind.values)
+max_probability_4_1 = np.max(joint_probability_4_low_wind.values)
+max_index_4_1 = np.argmax(joint_probability_4_low_wind.values)
 print(joint_probability_4_low_wind)
-print(max_probability_4, max_index_4)
+print(max_probability_4_1, max_index_4_1)
 
 joint_probability_4_mid_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'mid'})
 
-max_probability_4 = np.max(joint_probability_4_mid_wind.values)
-max_index_4 = np.argmax(joint_probability_4_mid_wind.values)
+max_probability_4_2 = np.max(joint_probability_4_mid_wind.values)
+max_index_4_2 = np.argmax(joint_probability_4_mid_wind.values)
 print(joint_probability_4_mid_wind)
-print(max_probability_4, max_index_4)
+print(max_probability_4_2, max_index_4_2)
 
 wind_marginal = (df['wind'].value_counts().reindex(['low', 'mid', 'high'])/len(df['wind'])).round(3)
 wind_marginal = np.array([[value] for value in wind_marginal])
@@ -304,18 +310,34 @@ low_wind_prior = wind_marginal[0][0]
 mid_wind_prior = wind_marginal[1][0]
 print(f'Prior probabilities for low and mid wind: \n{low_wind_prior, mid_wind_prior}')
 
-exit()
+# Use prior and max_probability_4 (1&2) and max_index_4 (1&2) to make the probability
+
+
+
+print("\n--- Question 1 ---\n")
 
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
 
+sample_size = 100000
+
 # Repeat Q.1. (a) of Task 1.2 - What is the probability of high wind when the weather is sunny?
 
+app_inference = BayesianModelSampling(weather_model)
+sample_a = app_inference.likelihood_weighted_sample(evidence=[State('weather','sun')], size=sample_size)
 
+high_wind_samples = sample_a[sample_a['wind'] == 'high']
+h_wind_given_sun = len(high_wind_samples)/sample_size
+print('Probability of high wind given sun')
+print(h_wind_given_sun)
 
 # Repeat Q.1. (b) of Task 1.2 - What is the probability of sunny weather when the wind is high?
 
-
+sample_b = app_inference.rejection_sample(evidence=[State('wind', 'high')], size=sample_size)
+sun_sample = sample_b[sample_b['weather'] == 'sun']
+print('probability of sun given high wind')
+sun_given_h_wind = len(sun_sample)/sample_size
+print(sun_given_h_wind)
 
 # Repeat Q.2 . (a) of Task 1.2 - Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 
@@ -324,6 +346,7 @@ from pgmpy.sampling import BayesianModelSampling
 # Repeat Q.2 . (b) of Task 1.2 - What is the most probable condition for precipitation, wind and weather, combined?
 
 
+exit()
 
 from pgmpy.inference import ApproxInference
 
