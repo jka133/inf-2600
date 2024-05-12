@@ -58,17 +58,13 @@ labels = {
 } 
 
 # Create bounds for continuous labels
-p_mean = df['precipitation'].mean()
-p_stdv = df['precipitation'].std()
+p_mean, p_stdv = df['precipitation'].mean(), df['precipitation'].std()
 
-t_max_mean = df['temp_max'].mean()
-t_max_stdv = df['temp_max'].std()
+t_max_mean, t_max_stdv = df['temp_max'].mean(), df['temp_max'].std()
 
-t_min_mean = df['temp_min'].mean()
-t_min_stdv = df['temp_min'].std()
+t_min_mean, t_min_stdv = df['temp_min'].mean(), df['temp_min'].std()
 
-w_mean = df['wind'].mean()
-w_stdv = df['wind'].std()
+w_mean, w_stdv = df['wind'].mean(), df['wind'].std()
 
 bounds = {
     'precipitation': [p_mean - num_stdv * p_stdv, p_mean, p_mean + num_stdv * p_stdv],
