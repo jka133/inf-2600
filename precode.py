@@ -123,17 +123,6 @@ var_dict = {'weather': ['precipitation', 'wind'],
            'wind': ['temp_min'],
            }
 
-""" # Create conditional distributions and store results in a list
-cpd_lst = []
-for key, value in var_dict.items():
-   length = len(value)
-   for i in range(length):
-       value_given_key = df.groupby(key)[value[i]].value_counts(normalize=True).sort_index()
-       cpd = value_given_key.unstack(fill_value=0).to_numpy().T
-       cpd_lst.append(cpd)   """
-""" End code from TA """
-
-""" Code from TA gave the wrong shapes of the CPDs """
 # Create conditional distributions and store results in a list
 cpd_lst = []
 for key, value in var_dict.items():
@@ -145,15 +134,8 @@ for key, value in var_dict.items():
         cpd_lst.append(cpd)
 # The loop above is from TA, but fixed but ChatGPT
 
-# Note that we get 3 Nan vslues in the above conditional distributions. This is because one of the type of precipitation (low) did not contain any relation with temp_max.
-# Therefore, normalization, does not produce the intended result.
-# To mitigate this, we replace Nan with the equal probability within the three values, i.e., 0.33
 cpd_lst[2][:,0] = .33
 print(cpd_lst)
-
-
-# https://pgmpy.org/models/bayesiannetwork.html
-# Zoom out and use meny bar to find Exact Inference and Approximate Inference for the next tasks
 
 # Creating tabular conditional probability distribution
 
@@ -187,7 +169,6 @@ temp_min_cpd = TabularCPD(variable='temp_min', variable_card=3,
 
 # Add CPDs and factors to the model
 weather_model.add_cpds(weather_cpd, precipitation_cpd, wind_cpd, temp_max_cpd, temp_min_cpd)
-print(weather_model)
 
 # Check if model is consistent
 print("My weather model is valid:")
@@ -231,89 +212,69 @@ print(phi_query_b)
 print("\n--- Question 1.2.2 ---\n")
 # Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
-
-joint_probability_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
-#Joint_probability is a huge table oof all the joint probabilities in the network
-
-max_probability_a = np.max(joint_probability_a.values)
-max_index_a = np.argmax(joint_probability_a.values)
-print(joint_probability_a)
-print(max_probability_a, max_index_a)
+j_prob_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+#j_prob is a huge table oof all the joint probabilities in the network
+max_prob_a = np.max(j_prob_a.values)
+max_idx_a = np.argmax(j_prob_a.values)
+print(j_prob_a)
+print(max_prob_a, max_idx_a)
 # Find a way to retrieve this, the max index and probability is found, but cannot retrieve it
 # Need the best joint probability, to explain it.....
 
 # (b) What is the most probable condition for precipitation, wind and weather, combined?
-
-joint_probability_b = var_elim.query(variables=['weather', 'precipitation', 'wind'])
-max_probability_b = np.max(joint_probability_b.values)
-max_index_b = np.argmax(joint_probability_b.values)
-print(joint_probability_b)
-print(max_probability_b, max_index_b)
+j_prob_b = var_elim.query(variables=['weather', 'precipitation', 'wind'])
+max_prob_b = np.max(j_prob_b.values)
+max_idx_b = np.argmax(j_prob_b.values)
+print(j_prob_b)
+print(max_prob_b, max_idx_b)
 # Find the variant of weather, precip and wind; weather(drizzle) | precipitation(mid)  | wind(mid)
-
 
 print("\n--- Question 1.2.3 ---\n")
 # Question 3. Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
-
-joint_probability_3 = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid'})
-max_probability_3 = np.max(joint_probability_3.values)
-max_index_3 = np.argmax(joint_probability_3.values)
-print(joint_probability_3)
-print(max_probability_3, max_index_3)
+j_prob_3 = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid'})
+max_prob_3 = np.max(j_prob_3.values)
+max_idx_3 = np.argmax(j_prob_3.values)
+print(j_prob_3)
+print(max_prob_3, max_idx_3)
 # Search for it in the table
 
 print("\n--- Question 1.2.4 ---\n")
 # Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
 #Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
+j_prob_4_l_w = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'low'})
+j_prob_4_m_w = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'mid'})
 
-joint_probability_4_low_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'low'})
+wind_prob = df['wind'].value_counts().reindex(['low', 'mid'])/len(df['wind'])
+l_w_prior = wind_prob[0]
+m_w_prior = wind_prob[1]
 
-max_probability_4_1 = np.max(joint_probability_4_low_wind.values)
-max_index_4_1 = np.argmax(joint_probability_4_low_wind.values)
-print(joint_probability_4_low_wind)
-print(max_probability_4_1, max_index_4_1)
+print(f'Prior probabilities for low and mid wind:\n{l_w_prior, m_w_prior}')
+prob_tab = j_prob_4_l_w * l_w_prior + j_prob_4_m_w * m_w_prior
+print(prob_tab)
 
-joint_probability_4_mid_wind = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid', 'wind': 'mid'})
+# Use prior and max_prob_4 (1&2) and max_idx_4 (1&2) to make the probability
 
-max_probability_4_2 = np.max(joint_probability_4_mid_wind.values)
-max_index_4_2 = np.argmax(joint_probability_4_mid_wind.values)
-print(joint_probability_4_mid_wind)
-print(max_probability_4_2, max_index_4_2)
-
-wind_marginal = (df['wind'].value_counts().reindex(['low', 'mid', 'high'])/len(df['wind'])).round(3)
-wind_marginal = np.array([[value] for value in wind_marginal])
-low_wind_prior = wind_marginal[0][0]
-mid_wind_prior = wind_marginal[1][0]
-print(f'Prior probabilities for low and mid wind: \n{low_wind_prior, mid_wind_prior}')
-
-# Use prior and max_probability_4 (1&2) and max_index_4 (1&2) to make the probability
-
-print("\n--- Question 1.3.1 ---\n")
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
 
-sample_size = 100000
+print("\n--- Question 1.3.1 ---\n")
 # Repeat Q.1. (a) of Task 1.2 - What is the probability of high wind when the weather is sunny?
-
+sample_size = 100000
 app_inference = BayesianModelSampling(weather_model)
 sample_a = app_inference.likelihood_weighted_sample(evidence=[State('weather','sun')], size=sample_size)
-
 high_wind_samples = sample_a[sample_a['wind'] == 'high']
 h_wind_given_sun = len(high_wind_samples)/sample_size
 print('Probability of high wind given sun')
 print(h_wind_given_sun)
 
 # Repeat Q.1. (b) of Task 1.2 - What is the probability of sunny weather when the wind is high?
-
 sample_b = app_inference.likelihood_weighted_sample(evidence=[State('wind','high')], size=sample_size)
-
 sun_sample = sample_b[sample_b['weather'] == 'sun']
 print('probability of sun given high wind')
 sun_given_h_wind = len(sun_sample)/sample_size
 print(sun_given_h_wind)
 
 print("\n--- Question 1.3.2 ---\n")
-
 # Repeat Q.2 . (a) of Task 1.2 - Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 full_sample = app_inference.forward_sample(size=sample_size)
 occurences_A = full_sample.groupby(['weather', 'wind', 'precipitation', 'temp_max', 'temp_min']).size()
@@ -327,21 +288,19 @@ print("\nMost Probable Condition and its Probability:")
 print(most_probable_condition_a, most_probable_probability_a)
 
 # Repeat Q.2 . (b) of Task 1.2 - What is the most probable condition for precipitation, wind and weather, combined?
-
 occurences_b = full_sample.groupby(['weather', 'wind', 'precipitation']).size()
 joint_probabilities_b = occurences_b.div(sample_size)
 
 # Find the most probable condition
 most_probable_condition_b = joint_probabilities_b.idxmax()
 most_probable_probability_b = joint_probabilities_b.max()
-
 print("\nMost Probable Condition and its Probability:")
 print(most_probable_condition_b, most_probable_probability_b)
 
-print("\n--- Question 1.3.3 ---\n")
 from pgmpy.inference import ApproxInference
-# Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 
+print("\n--- Question 1.3.3 ---\n")
+# Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 inf = ApproxInference(weather_model)
 prob_weather_mid_p = inf.query(variables = ['weather'], n_samples=sample_size, evidence={'precipitation': 'mid'})
 print(prob_weather_mid_p)
@@ -358,7 +317,7 @@ prob_m = m_wind_sample['weather'].value_counts(normalize=True)
 print(prob_m)
 
 # Use the prior probabilities:
-low_wind_prior, mid_wind_prior
+l_w_prior, m_w_prior
 # Do the math in report
 
 print("\n--- Task 1.4 ---\n")
@@ -384,15 +343,15 @@ weather_model3.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states)
 var_elim2 = VariableElimination(weather_model2)
 var_elim3 = VariableElimination(weather_model3)
 
-joint_probability_2 = var_elim2.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
-joint_probability_3 = var_elim3.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+j_prob_2 = var_elim2.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
+j_prob_3 = var_elim3.query(variables=['weather', 'precipitation', 'temp_max', 'temp_min', 'wind'])
 
-max_probability_2 = np.max(joint_probability_2.values)
-max_index_2 = np.argmax(joint_probability_2.values)
-#print(joint_probability_2)
-print(max_probability_2, max_index_2)
+max_prob_2 = np.max(j_prob_2.values)
+max_idx_2 = np.argmax(j_prob_2.values)
+#print(j_prob_2)
+print(max_prob_2, max_idx_2)
 
-max_probability_3 = np.max(joint_probability_3.values)
-max_index_3 = np.argmax(joint_probability_3.values)
-#print(joint_probability_3)
-print(max_probability_3, max_index_3)
+max_prob_3 = np.max(j_prob_3.values)
+max_idx_3 = np.argmax(j_prob_3.values)
+#print(j_prob_3)
+print(max_prob_3, max_idx_3)

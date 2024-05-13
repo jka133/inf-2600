@@ -78,8 +78,6 @@ dfc1.replace('mid', 1, inplace=True)
 dfc1.replace('high', 2, inplace=True)
 print(dfc1.corr()) # Compare with the pearson corrolation from before """
 
-print(df.describe())
-
 # Let's show all columns with missing data as well:
 df[df.isnull().any(axis=1)] # any missing data in columns
 df.isnull().any()
@@ -97,7 +95,7 @@ model = BayesianNetwork([
 ])
 
 model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # Tip from Benjamin Danielsen to fit CPDs
-print(f"model is valid: {model.check_model()}")
+print(f"Model is valid: {model.check_model()}")
 
 print("\n--- Question 2.2.1 ---\n")
 # Question 2.2.1 (a) What is the prob of precipitation type 'one' given 'mid' actual air temp, (b) and reverse?
@@ -105,7 +103,6 @@ var_elim = VariableElimination(model)
 phi_query_a = var_elim.query(variables=['Precipitation_Type'], evidence={'Air_temp_Act': 'mid'})
 print("\nProbability of precipitation types when the actual air temp is mid:")
 print(phi_query_a)
-
 
 phi_query_b = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Type': 'one'})
 print("\nProbability of actual air temp  when the is precipitation type is 'one':")
@@ -162,7 +159,6 @@ print(f'Prior probabilities for low and mid Wind_Speed_avg: \n{low_wind_prior, m
 # Use the priors and the probabilities in the report to make the probability
 
 ### TASK 2.3
-
 app_inference = BayesianModelSampling(model)
 sample_size = 100000
 
@@ -179,7 +175,6 @@ ata_mid_samples = sample_b[sample_b['Air_temp_Act'] == 'mid']
 m_ata_given_one_p = len(ata_mid_samples)/sample_size
 print('Probability of act air temp mid given precipitation type one')
 print(m_ata_given_one_p)
-
 
 print("\n--- Question 2.3.2 ---\n")
 # Question 2:
