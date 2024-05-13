@@ -378,7 +378,7 @@ weather_model3 = BayesianNetwork([
     ('precipitation', 'temp_min')]
 )
 
-weather_model2.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states) # Tip from Benjamin Danielsen
+weather_model2.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states) # Tip from Benjamin Danielsen to fit CPDs
 weather_model3.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states)
 
 var_elim2 = VariableElimination(weather_model2)

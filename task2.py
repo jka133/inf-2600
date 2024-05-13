@@ -25,6 +25,8 @@ dfc1.describe() """
 new_cols = ['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg', 'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity']
 df = df0[new_cols]
 
+print(df.corr())
+
 unique_fields = df['Precipitation_Type'].unique().tolist()
 print("Unique fields:\n", unique_fields)
 
@@ -62,29 +64,19 @@ bounds = {
     'Rel_Humidity_act': [rha_mean - num_stdv * rha_stdv, rha_mean, rha_mean + num_stdv * rha_stdv],
     'Wind_Speed_avg': [ws_mean - num_stdv * ws_stdv, ws_mean, ws_mean + num_stdv * ws_stdv],
     'Wind_Direction_vct': [wdc_mean - num_stdv * wdc_stdv, wdc_mean, wdc_mean + num_stdv * wdc_stdv],
-    'Precipitation_Type': [pt_mean - num_stdv * pt_stdv, pt_mean, pt_mean + num_stdv * pt_stdv],
-    'Precipitation_Intensity': [pi_mean - num_stdv * pi_stdv, pi_mean, pi_mean + num_stdv * pi_stdv]
+    'Precipitation_Type': [min(unique_fields) + 1, pt_mean, max(unique_fields) - 1], # To ensure three unique values
+    'Precipitation_Intensity': [pi_mean, pi_mean + num_stdv * pi_stdv, pi_mean + 2 * num_stdv * pi_stdv] # Heavily left dominant
 } 
 
 # Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
 for key, value in labels.items():
     df[key] = df.apply(label_data, args=(key, bounds, labels), axis=1)
 
-
-""" 
-
-Need to look at the data in Precipitation_Type and Precipitation_Intensity
-
- """
-
-
-
-
-
-
-
-
-
+dfc1 = df.copy()
+dfc1.replace('low', 0, inplace=True)
+dfc1.replace('mid', 1, inplace=True)
+dfc1.replace('high', 2, inplace=True)
+print(dfc1.corr()) # Compare with the pearson corrolation from before
 
 print(df.describe())
 
@@ -94,3 +86,16 @@ df.isnull().any()
 
 # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html
 # The ground work of chosing paramteres (nodes) for the Bayesian Network
+
+
+model = BayesianNetwork([
+    ('Air_temp_Act', 'Rel_Humidity_act'),
+    ('Air_temp_Act', 'Precipitation_Type'),
+    ('Rel_Humidity_act', 'Precipitation_Type'),
+    ('Rel_Humidity_act', 'Wind_Speed_avg'),
+    ('Wind_Speed_avg', 'Wind_Direction_vct'),
+    ('Precipitation_Type', 'Precipitation_Intensity')
+])
+
+model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # Tip from Benjamin Danielsen to fit CPDS
+print(f"model is valid: {model.check_model()}")
