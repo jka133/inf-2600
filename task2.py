@@ -19,17 +19,12 @@ df0 = pd.read_csv('SPRICE_Norwegian_Maritime_Data.csv')
 """ dfc1.info()
 dfc1.describe() """
 
-# Create new df with variables we want to work with:
-# Chosen using pearson correlation coeff
-# See figure and excel set up
 new_cols = ['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg', 'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity']
 df = df0[new_cols]
-
 print(df.corr())
 
 unique_fields = df['Precipitation_Type'].unique().tolist()
 print("Unique fields:\n", unique_fields)
-
 print(df)
 
 num_stdv = 1
@@ -111,52 +106,42 @@ print(phi_query_b)
 print("\n--- Question 2.2.2 ---\n")
 # Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
-joint_probability_a = var_elim.query(variables=['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg',
+j_prob_a = var_elim.query(variables=['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg',
                                                 'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity'])
 
-max_probability_a = joint_probability_a.values.max()
-max_index_a = joint_probability_a.values.argmax()
+max_probability_a = j_prob_a.values.max()
+max_index_a = j_prob_a.values.argmax()
 print(max_probability_a, max_index_a)
 # Find it
 
 # (b) What is the most probable condition for Air_temp_Act, Precipitation_Type and Rel_Humidity_act, combined?
-joint_probability_b = var_elim.query(variables=['Air_temp_Act', 'Precipitation_Type', 'Rel_Humidity_act'])
-max_probability_b = joint_probability_b.values.max()
-max_index_b = joint_probability_b.values.argmax()
+j_prob_b = var_elim.query(variables=['Air_temp_Act', 'Precipitation_Type', 'Rel_Humidity_act'])
+max_probability_b = j_prob_b.values.max()
+max_index_b = j_prob_b.values.argmax()
 print(max_probability_b, max_index_b)
 # Find the variant that yield the highest
 
 print("\n--- Question 2.2.3 ---\n")
 # Find the probability associated with each Air_temp_Act, given that the Precipitation_Intensity is medium? Explain your result.
-joint_probability_3 = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid'})
-max_probability_3 = joint_probability_3.values.max()
-max_index_3 = joint_probability_3.values.argmax()
+j_prob_3 = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid'})
+max_probability_3 = j_prob_3.values.max()
+max_index_3 = j_prob_3.values.argmax()
 print("Probability of actual air temp  when the is precipitation intensity is 'mid':")
-print(joint_probability_3)
+print(j_prob_3)
 print(max_probability_3, max_index_3)
 
 print("\n--- Question 2.2.4 ---\n")
 # Question 4. What is the probability of each Air_temp_Act given that Precipitation_Intensity is medium and Wind_Speed_avg is low or medium? 
 # Explain your method and results. How does the result change with the addition of Wind_Speed_avg factor compared to 2.2.3?
-joint_probability_4_low = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'low'})
-max_probability_4_1 = joint_probability_4_low.values.max()
-max_index_4_1 = joint_probability_4_low.values.argmax()
-print("Probability of actual air temp  when the is Wind_Speed_avg is 'low':")
-print(joint_probability_4_low)
-#print(max_probability_4_1, max_index_4_1)
+j_prob_4_low = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'low'})
+j_prob_4_mid = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'mid'})
 
-joint_probability_4_mid = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'mid'})
-max_probability_4_2 = joint_probability_4_mid.values.max()
-max_index_4_2 = joint_probability_4_mid.values.argmax()
-print("Probability of actual air temp  when the is Wind_Speed_avg is 'mid':")
-print(joint_probability_4_mid)
-#print(max_probability_4_2, max_index_4_2)
-
-wsa_marginal = (df['Wind_Speed_avg'].value_counts().reindex(['low', 'mid', 'high'])/len(df['Wind_Speed_avg'])).round(3)
-wsa_marginal = np.array([[value] for value in wsa_marginal])
-low_wind_prior,mid_wind_prior = wsa_marginal[0][0], wsa_marginal[1][0]
-print(f'Prior probabilities for low and mid Wind_Speed_avg: \n{low_wind_prior, mid_wind_prior}')
-# Use the priors and the probabilities in the report to make the probability
+wsa_prob = df['Wind_Speed_avg'].value_counts().reindex(['low', 'mid'])/df['Wind_Speed_avg'].value_counts().reindex(['low', 'mid']).sum()
+l_wsa_prior,m_wsa_prior = wsa_prob[0], wsa_prob[1]
+print(f'Prior probabilities for low and mid Wind_Speed_avg: \n{l_wsa_prior, m_wsa_prior}')
+prob_tab = l_wsa_prior * j_prob_4_low + m_wsa_prior * j_prob_4_mid
+print("Probability for Air_temp_Act given mid Precipitation_Intensity and low or mid Wind_Speed_avg")
+print(prob_tab)
 
 ### TASK 2.3
 app_inference = BayesianModelSampling(model)
@@ -219,5 +204,5 @@ prob_m = m_wsa_sample['Air_temp_Act'].value_counts(normalize=True)
 print(prob_m)
 
 # Use the prior probabilities:
-low_wind_prior, mid_wind_prior
+l_wsa_prior, m_wsa_prior
 # Do the math in report
