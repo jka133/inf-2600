@@ -87,7 +87,8 @@ weather_model = BayesianNetwork([
     ('wind', 'temp_min')
 ])
 
-weather_model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
+weather_model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) 
+# https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
 
 # Check if model is consistent
 print("My weather model is valid:")
@@ -100,6 +101,7 @@ weather_model.nodes()
 weather_model.edges()
 
 # Print the probability table of the weather node
+# https://pgmpy.org/models/bayesiannetwork.html#pgmpy.models.BayesianNetwork.BayesianNetwork.get_cpds 
 print(weather_model.get_cpds('weather'))
 # This seems correct given the info from assignement. weather' - (Rain: 44%; Sunny: 44%; Other (180): 12%).
 
@@ -108,6 +110,7 @@ print(weather_model.get_cpds('wind'))
 
 # Independcies in the model
 # Checking independcies of a particular node
+# https://pgmpy.org/base/base.html#pgmpy.base.DAG.local_independencies 
 print(f"Independencies in precipitation node: {weather_model.local_independencies('precipitation')}")
 print(f"Independencies in temp_max node: {weather_model.local_independencies('temp_max')}")
 print(f"Independencies in wind node: {weather_model.local_independencies('wind')}")
@@ -118,6 +121,7 @@ from pgmpy.inference import VariableElimination
 print("\n--- Question 1.2.1 ---\n")
 # Question 1: 
 # https://pgmpy.org/exact_infer/ve.html using the query feature
+# https://pgmpy.org/exact_infer/ve.html#pgmpy.inference.ExactInference.VariableElimination.query
 #(a) What is the probability of high wind when the weather is sunny? 
 var_elim = VariableElimination(weather_model)
 phi_query_a = var_elim.query(variables=['wind'], evidence={'weather': 'sun'})
@@ -136,6 +140,8 @@ j_prob_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'te
 #j_prob is a huge table oof all the joint probabilities in the network
 max_prob_a = j_prob_a.values.max()
 max_idx_a = j_prob_a.values.argmax()
+
+# https://numpy.org/doc/stable/reference/generated/numpy.unravel_index.html
 max_idx_a = np.unravel_index(max_idx_a, j_prob_a.values.shape)
 print("\nProbability and state for most probable condition")
 print(max_prob_a, max_idx_a)
@@ -155,7 +161,6 @@ max_prob_3 = j_prob_3.values.max()
 max_idx_3 = j_prob_3.values.argmax()
 print('\nProbabilities for each weather given mid precipitation')
 print(j_prob_3)
-print(max_prob_3, max_idx_3)
 
 print("\n--- Question 1.2.4 ---\n")
 # Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
@@ -181,6 +186,7 @@ app_inference = BayesianModelSampling(weather_model)
 
 print("\n--- Question 1.3.1 ---\n")
 # Repeat Q.1. (a) of Task 1.2 - What is the probability of high wind when the weather is sunny?
+# https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.likelihood_weighted_sample 
 sample_a = app_inference.likelihood_weighted_sample(evidence=[State('weather','sun')], size=sample_size)
 high_wind_samples = sample_a[sample_a['wind'] == 'high']
 print('Probability of high wind given sun')
@@ -196,7 +202,9 @@ print(sun_given_h_wind)
 
 print("\n--- Question 1.3.2 ---\n")
 # Repeat Q.2 . (a) of Task 1.2 - Calculate all the possible joint probability and determine the best probable condition. Explain your results?
+# https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.forward_sample
 full_sample = app_inference.forward_sample(size=sample_size)
+# https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.groupby.html
 occurences_A = full_sample.groupby(['weather', 'wind', 'precipitation', 'temp_max', 'temp_min']).size()
 joint_probabilities_a = occurences_A.div(sample_size)
 
@@ -221,6 +229,8 @@ from pgmpy.inference import ApproxInference
 
 print("\n--- Question 1.3.3 ---\n")
 # Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
+# https://pgmpy.org/approx_infer/approx_infer.html#pgmpy.inference.ApproxInference.ApproxInference 
+# https://pgmpy.org/approx_infer/approx_infer.html#pgmpy.inference.ApproxInference.ApproxInference.query
 inf = ApproxInference(weather_model)
 prob_weather_mid_p = inf.query(variables = ['weather'], n_samples=sample_size, evidence={'precipitation': 'mid'})
 print('Probability for each weather given mid precipitation\n')
@@ -229,6 +239,7 @@ print(prob_weather_mid_p)
 print("\n--- Question 1.3.4 ---\n")
 # Repeat Q.4 of Task 1.2 - What is the probability of each weather condition given that precipitation is medium and wind is low or medium?
 # Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
+# https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.rejection_sample
 l_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'low')], size=sample_size)
 prob_l = l_wind_sample['weather'].value_counts(normalize=True)
 
@@ -236,7 +247,7 @@ m_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 
 prob_m = m_wind_sample['weather'].value_counts(normalize=True)
 
 print('Probability of weather given mid precipitation and low or mid wind\n')
-print(prob_l * l_w_prior + prob_m *m_w_prior)
+print(prob_l * l_w_prior + prob_m * m_w_prior)
 
 print("\n--- Task 1.4 ---\n")
 """ New models: """
