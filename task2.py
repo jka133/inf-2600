@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from pgmpy.models import BayesianNetwork
-from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.estimators import MaximumLikelihoodEstimator, PC
 from pgmpy.inference import VariableElimination
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
@@ -81,6 +81,12 @@ df.isnull().any()
 
 # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html
 # The ground work of chosing paramteres (nodes) for the Bayesian Network
+
+# https://pgmpy.org/structure_estimator/pc.html#pgmpy.estimators.PC
+# PC Algorithm
+pc_algorithm = PC(df)
+pc_model = pc_algorithm.estimate()
+print("PC Algorithm Model Structure:", pc_model.edges())
 
 model = BayesianNetwork([
     ('Air_temp_Act', 'Rel_Humidity_act'),
