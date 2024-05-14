@@ -215,6 +215,6 @@ m_wsa_sample = app_inference.rejection_sample(evidence=[State('Precipitation_Int
 prob_m = m_wsa_sample['Air_temp_Act'].value_counts(normalize=True)
 
 print(f'Prior probabilities for low and mid Wind_Speed_avg: \n{l_wsa_prior, m_wsa_prior}')
-prob_tab = l_wsa_prior * l_wsa_sample + m_wsa_prior * m_wsa_sample
+prob_tab = (l_wsa_prior * prob_l + m_wsa_prior * prob_m)
 print("Probability for Air_temp_Act given mid Precipitation_Intensity and low or mid Wind_Speed_avg")
 print(prob_tab)
