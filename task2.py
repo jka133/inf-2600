@@ -44,11 +44,11 @@ def label_data(row, column, bounds, labels):
         return labels[column][2]
     return labels[column][1]
 
+# Calculating mean and standard deviation to use in bounds
 ata_mean, ata_stdv = df['Air_temp_Act'].mean(), df['Air_temp_Act'].std()
 rha_mean, rha_stdv = df['Rel_Humidity_act'].mean(), df['Rel_Humidity_act'].std()
 ws_mean, ws_stdv = df['Wind_Speed_avg'].mean(), df['Wind_Speed_avg'].std()
 wdc_mean, wdc_stdv = df['Wind_Direction_vct'].mean(), df['Wind_Direction_vct'].std()
-pt_mean, pt_stdv = df['Precipitation_Type'].mean(), df['Precipitation_Type'].std()
 pi_mean, pi_stdv = df['Precipitation_Intensity'].mean(), df['Precipitation_Intensity'].std()
 
 bounds = {
@@ -60,11 +60,12 @@ bounds = {
     'Precipitation_Intensity': [pi_mean, pi_mean + num_stdv * pi_stdv, pi_mean + 2 * num_stdv * pi_stdv] # Heavily left dominant
 } 
 
-# Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
+# Apply the labeling function to the columns
+# https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.apply.html
 for key, value in labels.items():
     df[key] = df.apply(label_data, args=(key, bounds, labels), axis=1)
 
-""" dfc1 = df.copy()
+dfc1 = df.copy()
 dfc1.replace('low', 1, inplace=True)
 dfc1.replace('mid', 2, inplace=True)
 dfc1.replace('high', 3, inplace=True)
@@ -72,7 +73,7 @@ dfc1.replace('one', 1, inplace=True)
 dfc1.replace('two', 2, inplace=True)
 dfc1.replace('three', 3, inplace=True)
 print('Pearson Correlation Coefficient Matrix for labled data:')
-print(dfc1.corr()) # Compare with the pearson corrolation from before """
+print(dfc1.corr()) # Compare with the pearson corrolation from before
 
 # Let's show all columns with missing data as well:
 df[df.isnull().any(axis=1)] # any missing data in columns
@@ -90,6 +91,7 @@ model = BayesianNetwork([
     ('Precipitation_Type', 'Precipitation_Intensity')
 ])
 
+# Fitting the cpds from dataframe df using MLE
 model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) 
 # https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
 print(f"Model is valid: {model.check_model()}")
@@ -108,7 +110,6 @@ print("\nProbability of actual air temp  when the is precipitation type is 'one'
 print(phi_query_b)
 
 print("\n--- Question 2.2.2 ---\n")
-# Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 j_prob_a = var_elim.query(variables=['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg',
                                     'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity'])
@@ -138,7 +139,7 @@ print("Probability of actual air temp  when the is precipitation intensity is 'm
 print(j_prob_3)
 
 print("\n--- Question 2.2.4 ---\n")
-# Question 4. What is the probability of each Air_temp_Act given that Precipitation_Intensity is medium and Wind_Speed_avg is low or medium? 
+# What is the probability of each Air_temp_Act given that Precipitation_Intensity is medium and Wind_Speed_avg is low or medium? 
 # Explain your method and results. How does the result change with the addition of Wind_Speed_avg factor compared to 2.2.3?
 j_prob_4_low = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'low'})
 j_prob_4_mid = var_elim.query(variables=['Air_temp_Act'], evidence={'Precipitation_Intensity': 'mid', 'Wind_Speed_avg': 'mid'})
@@ -156,7 +157,7 @@ sample_size = 100000
 
 print("\n--- Question 2.3.1 ---\n")
 # https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.likelihood_weighted_sample 
-# Question 2.2.1 (a) What is the prob of precipitation type 'one' given 'mid' actual air temp, (b) and reverse?
+# (a) What is the prob of precipitation type 'one' given 'mid' actual air temp, (b) and reverse?
 sample_a = app_inference.likelihood_weighted_sample(evidence=[State('Air_temp_Act', 'mid')], size=sample_size)
 p_one_samples = sample_a[sample_a['Precipitation_Type'] == 'one']
 one_p_given_m_ata = len(p_one_samples)/sample_size
@@ -171,7 +172,6 @@ print(m_ata_given_one_p)
 
 print("\n--- Question 2.3.2 ---\n")
 # https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.forward_sample
-# Question 2:
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 full_sample = app_inference.forward_sample(size=sample_size)
 # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.groupby.html
@@ -205,7 +205,7 @@ print('Probability of each Air_temp_Act given mid Precipitation_Intensity')
 print(prob_weather_mid_p)
 
 print("\n--- Question 2.3.4 ---\n")
-# Question 4. What is the probability of each Air_temp_Act given that Precipitation_Intensity is medium and Wind_Speed_avg is low or medium? 
+# What is the probability of each Air_temp_Act given that Precipitation_Intensity is medium and Wind_Speed_avg is low or medium? 
 # Explain your method and results. How does the result change with the addition of Wind_Speed_avg factor compared to 2.3.3?
 # https://pgmpy.org/approx_infer/bn_sampling.html#pgmpy.sampling.Sampling.BayesianModelSampling.rejection_sample
 l_wsa_sample = app_inference.rejection_sample(evidence=[State('Precipitation_Intensity', 'mid'), State('Wind_Speed_avg', 'low')], size=sample_size)
