@@ -11,7 +11,7 @@ from pgmpy.inference import ApproxInference
 df0 = pd.read_csv('SPRICE_Norwegian_Maritime_Data.csv')
 
 # Used Correlation Coefficient Matrix from task to derive these parameters, See report.
-new_cols = ['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg', 'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity']
+new_cols = ['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg', 'Precipitation_Type', 'Precipitation_Intensity']
 df = df0[new_cols]
 print('Pearson Correlaion Coefficient Matix for unlabled data')
 print(df.corr())
@@ -31,7 +31,6 @@ labels = {
     'Air_temp_Act': ['low', 'mid', 'high'], 
     'Rel_Humidity_act': ['low', 'mid', 'high'], 
     'Wind_Speed_avg': ['low', 'mid', 'high'], 
-    'Wind_Direction_vct': ['low', 'mid', 'high'], 
     'Precipitation_Type': ['one', 'two', 'three'], 
     'Precipitation_Intensity': ['low', 'mid', 'high']
 } 
@@ -48,14 +47,12 @@ def label_data(row, column, bounds, labels):
 ata_mean, ata_stdv = df['Air_temp_Act'].mean(), df['Air_temp_Act'].std()
 rha_mean, rha_stdv = df['Rel_Humidity_act'].mean(), df['Rel_Humidity_act'].std()
 ws_mean, ws_stdv = df['Wind_Speed_avg'].mean(), df['Wind_Speed_avg'].std()
-wdc_mean, wdc_stdv = df['Wind_Direction_vct'].mean(), df['Wind_Direction_vct'].std()
 pi_mean, pi_stdv = df['Precipitation_Intensity'].mean(), df['Precipitation_Intensity'].std()
 
 bounds = {
     'Air_temp_Act': [ata_mean - num_stdv * ata_stdv, ata_mean, ata_mean + num_stdv * ata_stdv],
     'Rel_Humidity_act': [rha_mean - num_stdv * rha_stdv, rha_mean, rha_mean + num_stdv * rha_stdv],
     'Wind_Speed_avg': [ws_mean - num_stdv * ws_stdv, ws_mean, ws_mean + num_stdv * ws_stdv],
-    'Wind_Direction_vct': [wdc_mean - num_stdv * wdc_stdv, wdc_mean, wdc_mean + num_stdv * wdc_stdv],
     'Precipitation_Type': [min(unique_fields) + 1, None, max(unique_fields) - 1], # To ensure three unique values
     'Precipitation_Intensity': [pi_mean, pi_mean + num_stdv * pi_stdv, pi_mean + 2 * num_stdv * pi_stdv] # Heavily left dominant
 } 
@@ -93,7 +90,6 @@ model = BayesianNetwork([
     ('Air_temp_Act', 'Precipitation_Type'),
     ('Rel_Humidity_act', 'Precipitation_Type'),
     ('Rel_Humidity_act', 'Wind_Speed_avg'),
-    ('Wind_Speed_avg', 'Wind_Direction_vct'),
     ('Precipitation_Type', 'Precipitation_Intensity')
 ])
 
@@ -118,7 +114,7 @@ print(phi_query_b)
 print("\n--- Question 2.2.2 ---\n")
 # (a) Calculate all the possible joint probability and determine the best probable condition. Explain your results?
 j_prob_a = var_elim.query(variables=['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg',
-                                    'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity'])
+                                    'Precipitation_Type', 'Precipitation_Intensity'])
 
 max_probability_a = j_prob_a.values.max()
 max_index_a = j_prob_a.values.argmax()
@@ -182,7 +178,7 @@ print("\n--- Question 2.3.2 ---\n")
 full_sample = app_inference.forward_sample(size=sample_size)
 # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.groupby.html
 occurences_A = full_sample.groupby(['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg',
-                                    'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity']).size()
+                                    'Precipitation_Type', 'Precipitation_Intensity']).size()
 joint_probabilities_a = occurences_A.div(sample_size)
 # Find the most probable condition
 most_probable_condition_a = joint_probabilities_a.idxmax()
