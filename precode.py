@@ -1,13 +1,7 @@
-#pip install pgmpy
-
-# Including the necessary libraries
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 from pgmpy.models import BayesianNetwork
-from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.estimators import MaximumLikelihoodEstimator
 
 # Import data, make a copy of the original
@@ -20,8 +14,8 @@ dfc1.info()
 
 # Checking the unique values in the 'weather' column
 unique_fields = dfc1['weather'].unique()
-print("Unique fields:\n", unique_fields)
-
+unique_fields = unique_fields.tolist()
+print("Unique fields for weather:\n", unique_fields)
 dfc1.describe()
 
 # Put categorical varaibles in a list
@@ -44,7 +38,8 @@ df.head()
 
 # Let's show all columns with missing data as well:
 df[df.isnull().any(axis=1)] # any missing data in columns
-df.isnull().any()
+print('Is missing data')
+print(df.isnull().any())
 
 num_stdv = 1
 
@@ -54,16 +49,13 @@ labels = {
     'temp_max': ['low', 'mid', 'high'], 
     'temp_min': ['low', 'mid', 'high'], 
     'wind': ['low', 'mid', 'high'], 
-    'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']
+    'weather': unique_fields
 } 
 
 # Create bounds for continuous labels
 p_mean, p_stdv = df['precipitation'].mean(), df['precipitation'].std()
-
 t_max_mean, t_max_stdv = df['temp_max'].mean(), df['temp_max'].std()
-
 t_min_mean, t_min_stdv = df['temp_min'].mean(), df['temp_min'].std()
-
 w_mean, w_stdv = df['wind'].mean(), df['wind'].std()
 
 bounds = {
@@ -81,11 +73,8 @@ def label_data(row, column, bounds, labels):
         return labels[column][2]
     return labels[column][1]
 
-# Apply the labeling function to the 'precipitation', 'temp_max', 'temp_min', and 'wind' columns
-df['precipitation'] = df.apply(label_data, args=('precipitation', bounds, labels), axis=1)
-df['temp_max'] = df.apply(label_data, args=('temp_max', bounds, labels), axis=1)
-df['temp_min'] = df.apply(label_data, args=('temp_min', bounds, labels), axis=1)
-df['wind'] = df.apply(label_data, args=('wind', bounds, labels), axis=1)
+for type in continuous_lst:
+    df[type] = df.apply(label_data, args=(type, bounds, labels), axis=1)
 
 print(df.describe())
 print(df)
@@ -98,77 +87,7 @@ weather_model = BayesianNetwork([
     ('wind', 'temp_min')
 ])
 
-# And, the states for each variables
-states = {
-    'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog'],
-    'precipitation': ['low', 'mid', 'high'],
-    'temp_max': ['low', 'mid', 'high'],
-    'temp_min': ['low', 'mid', 'high'],
-    'wind': ['low', 'mid', 'high']
-}
-
-# Calculate Probabilities
-""" Start of code from TA """
-# Weather does not have any parents so all we need are the marginal probabilities of observing each weather type
-#weather_marginal = (df['weather'].value_counts()/len(df['weather'])).round(3)
-weather_marginal = (df['weather'].value_counts().reindex(['drizzle', 'rain', 'sun', 'snow', 'fog'])/len(df['weather'])).round(3)
-# Is this not better?
-weather_marginal = np.array([[value] for value in weather_marginal])
-print(weather_marginal) # Seems right with the info from assignment
-
-# Joint Propabilities
-# Create dict where key=parent, value=child
-var_dict = {'weather': ['precipitation', 'wind'],
-           'precipitation': ['temp_max'],
-           'wind': ['temp_min'],
-           }
-
-# Create conditional distributions and store results in a list
-cpd_lst = []
-for key, value in var_dict.items():
-    for child in value:
-        # Group by the key and count occurrences of each state in the child, normalized
-        grouped = df.groupby(key)[child].value_counts(normalize=True)
-        # Unstack and reindex with all possible states to ensure complete shape
-        cpd = grouped.unstack(fill_value=0).reindex(columns=states[child], index=states[key], fill_value=0).to_numpy().T
-        cpd_lst.append(cpd)
-# The loop above is from TA, but fixed but ChatGPT
-
-cpd_lst[2][:,0] = .33
-print(cpd_lst)
-
-# Creating tabular conditional probability distribution
-
-weather_cpd = TabularCPD(variable='weather', variable_card=5,
-                         values=weather_marginal, # has no evidence
-                         state_names={'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']})
-
-precipitation_cpd = TabularCPD(variable='precipitation', variable_card=3,
-                               values=cpd_lst[0],
-                               evidence=['weather'], evidence_card=[5],
-                               state_names={'precipitation': ['low', 'mid', 'high'],
-                                            'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']})
-
-temp_max_cpd = TabularCPD(variable='temp_max', variable_card=3,
-                      values=cpd_lst[2],
-                      evidence=['precipitation'], evidence_card=[3],
-                      state_names={'temp_max': ['low', 'mid', 'high'],
-                                    'precipitation': ['low', 'mid', 'high']})
-
-wind_cpd = TabularCPD(variable='wind', variable_card=3,
-                      values=cpd_lst[1],
-                      evidence=['weather'], evidence_card=[5],
-                      state_names={'wind': ['low', 'mid', 'high'],
-                                    'weather': ['drizzle', 'rain', 'sun', 'snow', 'fog']})
-
-temp_min_cpd = TabularCPD(variable='temp_min', variable_card=3,
-                      values=cpd_lst[3],
-                      evidence=['wind'], evidence_card=[3],
-                      state_names={'temp_min': ['low', 'mid', 'high'],
-                                    'wind': ['low', 'mid', 'high']})
-
-# Add CPDs and factors to the model
-weather_model.add_cpds(weather_cpd, precipitation_cpd, wind_cpd, temp_max_cpd, temp_min_cpd)
+weather_model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
 
 # Check if model is consistent
 print("My weather model is valid:")
@@ -181,10 +100,11 @@ weather_model.nodes()
 weather_model.edges()
 
 # Print the probability table of the weather node
-print(weather_cpd)
+print(weather_model.get_cpds('weather'))
+# This seems correct given the info from assignement. weather' - (Rain: 44%; Sunny: 44%; Other (180): 12%).
 
 # Print the probability table of the wind node
-print(wind_cpd)
+print(weather_model.get_cpds('wind'))
 
 # Independcies in the model
 # Checking independcies of a particular node
@@ -216,25 +136,26 @@ j_prob_a = var_elim.query(variables=['weather', 'precipitation', 'temp_max', 'te
 #j_prob is a huge table oof all the joint probabilities in the network
 max_prob_a = j_prob_a.values.max()
 max_idx_a = j_prob_a.values.argmax()
-print(j_prob_a)
+max_idx_a = np.unravel_index(max_idx_a, j_prob_a.values.shape)
+print("\nProbability and state for most probable condition")
 print(max_prob_a, max_idx_a)
 
 # (b) What is the most probable condition for precipitation, wind and weather, combined?
 j_prob_b = var_elim.query(variables=['weather', 'precipitation', 'wind'])
-max_prob_b = np.max(j_prob_b.values)
-max_idx_b = np.argmax(j_prob_b.values)
-print(j_prob_b)
+max_prob_b = j_prob_b.values.max()
+max_idx_b = j_prob_b.values.argmax()
+max_idx_b = np.unravel_index(max_idx_b, j_prob_b.values.shape)
+print("\nProbability and state for most probable condition")
 print(max_prob_b, max_idx_b)
-# Find the variant of weather, precip and wind; weather(drizzle) | precipitation(mid)  | wind(mid)
 
 print("\n--- Question 1.2.3 ---\n")
 # Question 3. Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 j_prob_3 = var_elim.query(variables=['weather'], evidence={'precipitation': 'mid'})
 max_prob_3 = j_prob_3.values.max()
 max_idx_3 = j_prob_3.values.argmax()
+print('\nProbabilities for each weather given mid precipitation')
 print(j_prob_3)
 print(max_prob_3, max_idx_3)
-# Search for it in the table
 
 print("\n--- Question 1.2.4 ---\n")
 # Question 4. What is the probability of each weather condition given that precipitation is medium and wind is low or medium? 
@@ -246,12 +167,12 @@ wind_prob = df['wind'].value_counts().reindex(['low', 'mid'])/df['wind'].value_c
 l_w_prior = wind_prob[0]
 m_w_prior = wind_prob[1]
 
-print(f'Prior probabilities for low and mid wind:\n{l_w_prior, m_w_prior}')
+print(f'\nPrior probabilities for low and mid wind:\n{l_w_prior, m_w_prior}')
 prob_tab = j_prob_4_l_w * l_w_prior + j_prob_4_m_w * m_w_prior
+print('\nProbabilities for each weather given mid precipitation and mid or low wind')
 print(prob_tab)
 
 # Use prior and max_prob_4 (1&2) and max_idx_4 (1&2) to make the probability
-
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
 
@@ -262,14 +183,14 @@ print("\n--- Question 1.3.1 ---\n")
 # Repeat Q.1. (a) of Task 1.2 - What is the probability of high wind when the weather is sunny?
 sample_a = app_inference.likelihood_weighted_sample(evidence=[State('weather','sun')], size=sample_size)
 high_wind_samples = sample_a[sample_a['wind'] == 'high']
-h_wind_given_sun = len(high_wind_samples)/sample_size
 print('Probability of high wind given sun')
+h_wind_given_sun = len(high_wind_samples)/sample_size
 print(h_wind_given_sun)
 
 # Repeat Q.1. (b) of Task 1.2 - What is the probability of sunny weather when the wind is high?
 sample_b = app_inference.likelihood_weighted_sample(evidence=[State('wind','high')], size=sample_size)
 sun_sample = sample_b[sample_b['weather'] == 'sun']
-print('probability of sun given high wind')
+print('\nprobability of sun given high wind')
 sun_given_h_wind = len(sun_sample)/sample_size
 print(sun_given_h_wind)
 
@@ -302,6 +223,7 @@ print("\n--- Question 1.3.3 ---\n")
 # Repeat Q.3 of Task 1.2 - Find the probability associated with each weather, given that the precipitation is medium? Explain your result.
 inf = ApproxInference(weather_model)
 prob_weather_mid_p = inf.query(variables = ['weather'], n_samples=sample_size, evidence={'precipitation': 'mid'})
+print('Probability for each weather given mid precipitation\n')
 print(prob_weather_mid_p)
 
 print("\n--- Question 1.3.4 ---\n")
@@ -309,15 +231,12 @@ print("\n--- Question 1.3.4 ---\n")
 # Explain your method and results. How does the result change with the addition of wind factor compared to question 3 of Task 1.2?
 l_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'low')], size=sample_size)
 prob_l = l_wind_sample['weather'].value_counts(normalize=True)
-print(prob_l)
 
 m_wind_sample = app_inference.rejection_sample(evidence=[State('precipitation', 'mid'), State('wind', 'mid')], size=sample_size)
 prob_m = m_wind_sample['weather'].value_counts(normalize=True)
-print(prob_m)
 
-# Do the # Use the prior probabilities:
-l_w_prior, m_w_prior
-# Do the math in report in report
+print('Probability of weather given mid precipitation and low or mid wind\n')
+print(prob_l * l_w_prior + prob_m *m_w_prior)
 
 print("\n--- Task 1.4 ---\n")
 """ New models: """
@@ -336,8 +255,8 @@ weather_model3 = BayesianNetwork([
     ('precipitation', 'temp_min')]
 )
 
-weather_model2.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states) # Tip from Benjamin Danielsen to fit CPDs
-weather_model3.fit(df, estimator=MaximumLikelihoodEstimator, state_names=states)
+weather_model2.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) #https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
+weather_model3.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels)
 
 var_elim2 = VariableElimination(weather_model2)
 var_elim3 = VariableElimination(weather_model3)
@@ -347,10 +266,18 @@ j_prob_3 = var_elim3.query(variables=['weather', 'precipitation', 'temp_max', 't
 
 max_prob_2 = j_prob_2.values.max()
 max_idx_2 = j_prob_2.values.argmax()
-#print(j_prob_2)
+max_idx_2 = np.unravel_index(max_idx_2, j_prob_2.values.shape)
+print('Model 2')
+print('Maximum joint probability and state giving maximum probability')
 print(max_prob_2, max_idx_2)
 
 max_prob_3 = j_prob_3.values.max()
 max_idx_3 = j_prob_3.values.argmax()
-#print(j_prob_3)
+max_idx_3 = np.unravel_index(max_idx_3, j_prob_3.values.shape)
+print('\nModel 3')
+print('Maximum joint probability and state giving maximum probability')
 print(max_prob_3, max_idx_3)
+
+correlation_matrix = df0[['precipitation', 'temp_max', 'temp_min', 'wind']].corr()
+print("Pearson Correlation Coefficient Matrix:")
+print(correlation_matrix)

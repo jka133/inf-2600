@@ -1,31 +1,28 @@
-
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 from pgmpy.models import BayesianNetwork
-from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.estimators import MaximumLikelihoodEstimator
 from pgmpy.inference import VariableElimination
 from pgmpy.factors.discrete import State
 from pgmpy.sampling import BayesianModelSampling
 from pgmpy.inference import ApproxInference
 
-
-# Import data, make a copy of the original
 df0 = pd.read_csv('SPRICE_Norwegian_Maritime_Data.csv')
-# Get characteristics of dataset including columns with missing data as well:
-""" dfc1.info()
-dfc1.describe() """
 
+# Used Correlation Coefficient Matrix from task to derive these parameters, See report.
 new_cols = ['Air_temp_Act', 'Rel_Humidity_act', 'Wind_Speed_avg', 'Wind_Direction_vct', 'Precipitation_Type', 'Precipitation_Intensity']
 df = df0[new_cols]
+print('Pearson Correlaion Coefficient Matix for unlabled data')
 print(df.corr())
 
 unique_fields = df['Precipitation_Type'].unique().tolist()
-print("Unique fields:\n", unique_fields)
+print("Unique fields in precipitation type:\n", unique_fields)
 print(df)
+
+df[df.isnull().any(axis=1)] # any missing data in columns
+print('Is missing data')
+print(df.isnull().any())
 
 num_stdv = 1
 
@@ -59,7 +56,7 @@ bounds = {
     'Rel_Humidity_act': [rha_mean - num_stdv * rha_stdv, rha_mean, rha_mean + num_stdv * rha_stdv],
     'Wind_Speed_avg': [ws_mean - num_stdv * ws_stdv, ws_mean, ws_mean + num_stdv * ws_stdv],
     'Wind_Direction_vct': [wdc_mean - num_stdv * wdc_stdv, wdc_mean, wdc_mean + num_stdv * wdc_stdv],
-    'Precipitation_Type': [min(unique_fields) + 1, pt_mean, max(unique_fields) - 1], # To ensure three unique values
+    'Precipitation_Type': [min(unique_fields) + 1, None, max(unique_fields) - 1], # To ensure three unique values
     'Precipitation_Intensity': [pi_mean, pi_mean + num_stdv * pi_stdv, pi_mean + 2 * num_stdv * pi_stdv] # Heavily left dominant
 } 
 
@@ -68,9 +65,13 @@ for key, value in labels.items():
     df[key] = df.apply(label_data, args=(key, bounds, labels), axis=1)
 
 """ dfc1 = df.copy()
-dfc1.replace('low', 0, inplace=True)
-dfc1.replace('mid', 1, inplace=True)
-dfc1.replace('high', 2, inplace=True)
+dfc1.replace('low', 1, inplace=True)
+dfc1.replace('mid', 2, inplace=True)
+dfc1.replace('high', 3, inplace=True)
+dfc1.replace('one', 1, inplace=True)
+dfc1.replace('two', 2, inplace=True)
+dfc1.replace('three', 3, inplace=True)
+print('Pearson Correlation Coefficient Matrix for labled data:')
 print(dfc1.corr()) # Compare with the pearson corrolation from before """
 
 # Let's show all columns with missing data as well:
@@ -89,7 +90,7 @@ model = BayesianNetwork([
     ('Precipitation_Type', 'Precipitation_Intensity')
 ])
 
-model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # Tip from Benjamin Danielsen to fit CPDs
+model.fit(df, estimator=MaximumLikelihoodEstimator, state_names=labels) # https://pgmpy.org/_modules/pgmpy/models/BayesianNetwork.html#BayesianNetwork.fit
 print(f"Model is valid: {model.check_model()}")
 
 print("\n--- Question 2.2.1 ---\n")
@@ -111,13 +112,14 @@ j_prob_a = var_elim.query(variables=['Air_temp_Act', 'Rel_Humidity_act', 'Wind_S
 
 max_probability_a = j_prob_a.values.max()
 max_index_a = j_prob_a.values.argmax()
+max_index_a = np.unravel_index(max_index_a, j_prob_a.values.shape)
 print(max_probability_a, max_index_a)
-# Find it
 
 # (b) What is the most probable condition for Air_temp_Act, Precipitation_Type and Rel_Humidity_act, combined?
 j_prob_b = var_elim.query(variables=['Air_temp_Act', 'Precipitation_Type', 'Rel_Humidity_act'])
 max_probability_b = j_prob_b.values.max()
 max_index_b = j_prob_b.values.argmax()
+max_index_b = np.unravel_index(max_index_b, j_prob_b.values.shape)
 print(max_probability_b, max_index_b)
 # Find the variant that yield the highest
 
@@ -203,6 +205,7 @@ m_wsa_sample = app_inference.rejection_sample(evidence=[State('Precipitation_Int
 prob_m = m_wsa_sample['Air_temp_Act'].value_counts(normalize=True)
 print(prob_m)
 
-# Use the prior probabilities:
-l_wsa_prior, m_wsa_prior
-# Do the math in report
+print(f'Prior probabilities for low and mid Wind_Speed_avg: \n{l_wsa_prior, m_wsa_prior}')
+prob_tab = l_wsa_prior * l_wsa_sample + m_wsa_prior * m_wsa_sample
+print("Probability for Air_temp_Act given mid Precipitation_Intensity and low or mid Wind_Speed_avg")
+print(prob_tab)
